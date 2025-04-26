@@ -15,8 +15,8 @@ QuizPro is a web app that lets you upload PowerPoint files, extracts the text, a
 3. Enter your API key and upload a PowerPoint file to start
 
 ## Hackathon Submission Checklist
-- [x] Project description (this file)
-- [x] Source code (this repo)
+- [ ] Project description (this file)
+- [ ] Source code (this repo)
 - [ ] Screenshot of the app
 - [ ] Demo video (2 min, with voiceover)
 

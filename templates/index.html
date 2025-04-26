@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 
-  <!--Script to redirect user to setup page if no API key detected-->
   <script>
+    
+    // logic to redirect user to setup page if no API key detected
+    
     if (
       !sessionStorage.getItem('geminiKey') &&
       !sessionStorage.getItem('openaiKey') &&
@@ -11,7 +13,19 @@
     ) {
       window.location.href = "/setup";
     }
+  
+    // Set default config if missing
+    if (!sessionStorage.getItem('tone')) {
+      sessionStorage.setItem('tone', 'friendly');
+    }
+    if (!sessionStorage.getItem('difficulty')) {
+      sessionStorage.setItem('difficulty', 'medium');
+    }
+    if (!sessionStorage.getItem('style')) {
+      sessionStorage.setItem('style', 'multiple-choice');
+    }
   </script>
+  
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

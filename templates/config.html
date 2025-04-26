@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Configure Chat</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+	<div class="container">
+		<h2>Configure Your Chat</h2>
+
+		<label for="tone">Tone:</label>
+		<select id="tone">
+			<option value="formal">Formal</option>
+			<option value="casual">Casual</option>
+			<option value="friendly">Friendly</option>
+		</select>
+
+		<label for="difficulty">Difficulty:</label>
+		<select id="difficulty">
+			<option value="easy">Easy</option>
+			<option value="medium">Medium</option>
+			<option value="hard">Hard</option>
+		</select>
+
+		<label for="style">Style:</label>
+		<select id="style">
+            <option value="multiple-choice">Multiple Choice</option>
+            <option value="short-answer">Short Answer</option>
+            <option value="free-response">Free Response</option>
+        </select>
+
+		<button onclick="saveConfig()">Save Configuration</button>
+		<br><br>
+		<a href="/setup">← Back to API Key Setup</a>
+	</div>
+
+	<script>
+		function saveConfig() {
+			sessionStorage.setItem('tone', document.getElementById('tone').value);
+			sessionStorage.setItem('difficulty', document.getElementById('difficulty').value);
+			sessionStorage.setItem('style', document.getElementById('style').value);
+			window.location.href = "/chat";
+		}
+	</script>
+</body>
+</html>

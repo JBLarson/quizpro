@@ -29,7 +29,16 @@ def evaluate():
 def setup():
     return render_template('setup.html')
 
+# route for chat configuration
+@app.route('/config')
+def config():
+    return render_template('config.html')
 
+
+# route for adding content
+@app.route('/content')
+def content():
+    return render_template('content.html')
 
 
 

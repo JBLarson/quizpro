@@ -1,9 +1,10 @@
-/* QuizPro Minimal Styles */
+
 body {
   font-family: Arial, sans-serif;
   background: #f7f7fa;
   margin: 0;
   padding: 0;
+  padding-top: 60px;
 }
 
 .container {
@@ -48,3 +49,42 @@ button:disabled {
   padding: 12px;
   background: #fafbfc;
 } 
+
+/* menu styling */
+
+.menu-bar-wrapper {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background: #f7f7fa;
+	padding: 12px 0;
+	z-index: 1000;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.menu-bar {
+	max-width: 600px;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	gap: 32px;
+}
+
+.menu-bar a {
+	text-decoration: none;
+	color: #333;
+	font-weight: bold;
+	font-size: 16px;
+	padding: 8px 12px;
+	border-radius: 6px;
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.menu-bar a:hover {
+	background-color: #e0e7ff;
+	color: #1d4ed8;
+}
+

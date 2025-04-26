@@ -6,12 +6,14 @@
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+  <div class="menu-bar-wrapper">
     <div class="menu-bar">
-		<a href="/">Chat</a> |
-		<a href="/config">Config</a> |
-		<a href="/content">Content</a> |
-		<a href="/setup">API Keys</a>
-	</div>
+      <a href="/">Chat</a>
+      <a href="/config">Config</a>
+      <a href="/content">Content</a>
+      <a href="/setup">API Keys</a>
+    </div>
+  </div>
 	<div class="container">
 		<h2>Enter Your API Keys</h2>
 		<input type="text" id="geminiKey" placeholder="Gemini API Key">

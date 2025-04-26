@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizPro</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>QuizPro</h1>
+    <!-- Upload Section -->
+    <section id="upload-section">
+      <label for="pptx-file">Upload PowerPoint (.pptx):</label>
+      <input type="file" id="pptx-file" accept=".pptx">
+    </section>
+    <!-- API Key & Model Selection -->
+    <section id="api-section">
+      <label for="api-key">API Key:</label>
+      <input type="password" id="api-key" placeholder="Enter your API key">
+      <label for="model-select">Model:</label>
+      <select id="model-select">
+        <option value="openai">OpenAI</option>
+        <option value="deepseek">DeepSeek</option>
+      </select>
+    </section>
+    <!-- Prompt Configuration -->
+    <section id="prompt-section">
+      <label for="tone">Tone:</label>
+      <select id="tone">
+        <option value="casual">Casual</option>
+        <option value="professional">Professional</option>
+      </select>
+      <label for="difficulty">Difficulty:</label>
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+      <label for="style">Style:</label>
+      <select id="style">
+        <option value="multiple-choice">Multiple Choice</option>
+        <option value="open-ended">Open Ended</option>
+      </select>
+    </section>
+    <!-- Chat Interface -->
+    <section id="quiz-section">
+      <div id="chat"></div>
+      <input type="text" id="user-answer" placeholder="Type your answer...">
+      <button id="send-answer">Send</button>
+    </section>
+  </div>
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+</html> 

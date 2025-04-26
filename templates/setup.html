@@ -7,6 +7,7 @@
 </head>
 <body>
     <div class="menu-bar">
+		<a href="/chat">Chat</a> |
 		<a href="/config">Config</a> |
 		<a href="/content">Content</a> |
 		<a href="/setup">API Keys</a>
@@ -16,6 +17,25 @@
 		<input type="text" id="geminiKey" placeholder="Gemini API Key">
 		<input type="text" id="openaiKey" placeholder="OpenAI API Key">
 		<input type="text" id="deepseekKey" placeholder="DeepSeek API Key">
+
+        <script>
+            // Pre-fill fields if sessionStorage values exist
+            document.addEventListener('DOMContentLoaded', () => {
+                if (sessionStorage.getItem('geminiKey')) {
+                    document.getElementById('geminiKey').value = sessionStorage.getItem('geminiKey');
+                }
+                if (sessionStorage.getItem('openaiKey')) {
+                    document.getElementById('openaiKey').value = sessionStorage.getItem('openaiKey');
+                }
+                if (sessionStorage.getItem('deepseekKey')) {
+                    document.getElementById('deepseekKey').value = sessionStorage.getItem('deepseekKey');
+                }
+                if (sessionStorage.getItem('modelChoice')) {
+                    document.getElementById('modelSelect').value = sessionStorage.getItem('modelChoice');
+                }
+            });
+        </script>
+        
 		<button onclick="saveKeys()">Submit</button>
 
         <select id="modelSelect">

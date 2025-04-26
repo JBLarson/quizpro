@@ -19,18 +19,13 @@
 
 	<div class="container">
 		<h2>Enter Your API Keys</h2>
-		<label for="API Selecter">API Key:</label>
-		<input type="text" id="API Selecter" placeholder="Gemini API Key">
-   <!-- <input type="text" id="openaiKey" placeholder="OpenAI API Key">
-		<input type="text" id="deepseekKey" placeholder="DeepSeek API Key"> -->
-
 		<label for="modelSelect">Select Model:</label>
 		<select id="modelSelect" onchange="loadExistingKey()">
 			<option value="gemini">Gemini</option>
 			<option value="openai">OpenAI</option>
 			<option value="deepseek">DeepSeek</option>
 		</select>
-
+		<label for="apiKey">API Key:</label>
 		<input type="text" id="apiKey" placeholder="Enter API Key">
 
 		<button onclick="saveKeys()">Save and Continue</button>

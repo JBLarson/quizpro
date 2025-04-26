@@ -16,43 +16,54 @@
   </div>
 	<div class="container">
 		<h2>Enter Your API Keys</h2>
-		<input type="text" id="geminiKey" placeholder="Gemini API Key">
-		<input type="text" id="openaiKey" placeholder="OpenAI API Key">
-		<input type="text" id="deepseekKey" placeholder="DeepSeek API Key">
+		<input type="text" id="API Selecter" placeholder="Gemini API Key">
+   <!-- <input type="text" id="openaiKey" placeholder="OpenAI API Key">
+		<input type="text" id="deepseekKey" placeholder="DeepSeek API Key"> -->
 
         <script>
             // Pre-fill fields if sessionStorage values exist
             document.addEventListener('DOMContentLoaded', () => {
-                if (sessionStorage.getItem('geminiKey')) {
-                    document.getElementById('geminiKey').value = sessionStorage.getItem('geminiKey');
+                if (sessionStorage.getItem('API Key')) {
+                    document.getElementById('API Selecter').value = sessionStorage.getItem('API Key');
                 }
-                if (sessionStorage.getItem('openaiKey')) {
-                    document.getElementById('openaiKey').value = sessionStorage.getItem('openaiKey');
-                }
-                if (sessionStorage.getItem('deepseekKey')) {
-                    document.getElementById('deepseekKey').value = sessionStorage.getItem('deepseekKey');
-                }
-                if (sessionStorage.getItem('modelChoice')) {
-                    document.getElementById('modelSelect').value = sessionStorage.getItem('modelChoice');
-                }
+                // if (sessionStorage.getItem('openaiKey')) {
+                //     document.getElementById('openaiKey').value = sessionStorage.getItem('openaiKey');
+                // }
+                // if (sessionStorage.getItem('deepseekKey')) {
+                //     document.getElementById('deepseekKey').value = sessionStorage.getItem('deepseekKey');
+                // }
+                // if (sessionStorage.getItem('modelChoice')) {
+                //     document.getElementById('modelSelect').value = sessionStorage.getItem('modelChoice');
+                // }
+            });
+
+            document.addEventListener("change", () => {
+                document.getElementById('API Selecter').placeholder = document.getElementById('modelSelect').value;
             });
         </script>
         
 		<button onclick="saveKeys()">Submit</button>
 
         <select id="modelSelect">
-            <option value="gemini">Gemini</option>
-            <option value="openai">OpenAI</option>
-            <option value="deepseek">DeepSeek</option>
+            <option value="Gemini API Key">Gemini</option>
+            <option value="OpenAI API Key">OpenAI</option>
+            <option value="DeepSeek API Key">DeepSeek</option>
         </select>
-        
     </div>
 	<script>
 		function saveKeys() {
-			sessionStorage.setItem('geminiKey', document.getElementById('geminiKey').value);
-			sessionStorage.setItem('openaiKey', document.getElementById('openaiKey').value);
-			sessionStorage.setItem('deepseekKey', document.getElementById('deepseekKey').value);
-            sessionStorage.setItem('modelChoice', document.getElementById('modelSelect').value);
+            if(document.getElementById('API Selecter').placeholder == "Gemini API Key")
+            {
+                sessionStorage.setItem('geminiKey', document.getElementById('API Selecter').value);
+            }
+			if(document.getElementById('API Selecter').placeholder == "OpenAI API Key")
+            {
+                sessionStorage.setItem('openaiKey', document.getElementById('API Selecter').value);
+            }
+            if(document.getElementById('API Selecter').placeholder == "DeepSeek API Key")
+            {
+                sessionStorage.setItem('deepseekKey', document.getElementById('API Selecter').value);
+            }
 			window.location.href = "/";
 		}
 	</script>

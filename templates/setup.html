@@ -2,8 +2,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>API Key Setup</title>
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+	<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon/favicon.ico') }}">
 </head>
 <body>
   <div class="menu-bar-wrapper">
@@ -43,11 +46,19 @@
         </script>
         
 		<button onclick="saveKeys()">Submit</button>
+<<<<<<< Updated upstream
 
         <select id="modelSelect">
             <option value="Gemini API Key">Gemini</option>
             <option value="OpenAI API Key">OpenAI</option>
             <option value="DeepSeek API Key">DeepSeek</option>
+=======
+        <label for="modelSelect">Model:</label>
+        <select id="modelSelect" aria-label="Model selection">
+            <option value="gemini">Gemini</option>
+            <option value="openai">OpenAI</option>
+            <option value="deepseek">DeepSeek</option>
+>>>>>>> Stashed changes
         </select>
     </div>
 	<script>

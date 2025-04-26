@@ -1,0 +1,33 @@
+<!-- templates/setup.html -->
+<!DOCTYPE html>
+<html>
+<head>
+	<title>API Key Setup</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+	<div class="container">
+		<h2>Enter Your API Keys</h2>
+		<input type="text" id="geminiKey" placeholder="Gemini API Key">
+		<input type="text" id="openaiKey" placeholder="OpenAI API Key">
+		<input type="text" id="deepseekKey" placeholder="DeepSeek API Key">
+		<button onclick="saveKeys()">Submit</button>
+
+        <select id="modelSelect">
+            <option value="gemini">Gemini</option>
+            <option value="openai">OpenAI</option>
+            <option value="deepseek">DeepSeek</option>
+        </select>
+        
+    </div>
+	<script>
+		function saveKeys() {
+			sessionStorage.setItem('geminiKey', document.getElementById('geminiKey').value);
+			sessionStorage.setItem('openaiKey', document.getElementById('openaiKey').value);
+			sessionStorage.setItem('deepseekKey', document.getElementById('deepseekKey').value);
+            sessionStorage.setItem('modelChoice', document.getElementById('modelSelect').value);
+			window.location.href = "/";
+		}
+	</script>
+</body>
+</html>

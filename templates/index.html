@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+  <!--Script to redirect user to setup page if no API key detected-->
+  <script>
+    if (
+      !sessionStorage.getItem('geminiKey') &&
+      !sessionStorage.getItem('openaiKey') &&
+      !sessionStorage.getItem('deepseekKey')
+    ) {
+      window.location.href = "/setup";
+    }
+  </script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuizPro</title>

@@ -24,5 +24,16 @@ def evaluate():
     # TODO: Implement answer evaluation
     return jsonify({'result': 'correct', 'explanation': 'Sample explanation.'})
 
+# route for api key setup
+@app.route('/setup')
+def setup():
+    return render_template('setup.html')
+
+
+
+
+
+
+
 if __name__ == '__main__':
     app.run(debug=True) 

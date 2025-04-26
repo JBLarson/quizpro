@@ -1,6 +1,5 @@
-<!-- templates/setup.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,66 +8,68 @@
 	<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon/favicon.ico') }}">
 </head>
 <body>
-  <div class="menu-bar-wrapper">
-    <div class="menu-bar">
-      <a href="/">Chat</a>
-      <a href="/config">Config</a>
-      <a href="/content">Content</a>
-      <a href="/setup">API Keys</a>
-    </div>
-  </div>
+	<div class="menu-bar-wrapper">
+		<div class="menu-bar">
+			<a href="/">Chat</a>
+			<a href="/config">Config</a>
+			<a href="/content">Content</a>
+			<a href="/setup">API Keys</a>
+		</div>
+	</div>
+
 	<div class="container">
-		<h2>Enter Your API Keys</h2>
-		<input type="text" id="API Selecter" placeholder="Gemini API Key">
-   <!-- <input type="text" id="openaiKey" placeholder="OpenAI API Key">
-		<input type="text" id="deepseekKey" placeholder="DeepSeek API Key"> -->
+		<h2>Enter Your API Key</h2>
 
-        <script>
-            // Pre-fill fields if sessionStorage values exist
-            document.addEventListener('DOMContentLoaded', () => {
-                if (sessionStorage.getItem('API Key')) {
-                    document.getElementById('API Selecter').value = sessionStorage.getItem('API Key');
-                }
-                // if (sessionStorage.getItem('openaiKey')) {
-                //     document.getElementById('openaiKey').value = sessionStorage.getItem('openaiKey');
-                // }
-                // if (sessionStorage.getItem('deepseekKey')) {
-                //     document.getElementById('deepseekKey').value = sessionStorage.getItem('deepseekKey');
-                // }
-                // if (sessionStorage.getItem('modelChoice')) {
-                //     document.getElementById('modelSelect').value = sessionStorage.getItem('modelChoice');
-                // }
-            });
+		<label for="modelSelect">Select Model:</label>
+		<select id="modelSelect" onchange="loadExistingKey()">
+			<option value="gemini">Gemini</option>
+			<option value="openai">OpenAI</option>
+			<option value="deepseek">DeepSeek</option>
+		</select>
 
-            document.addEventListener("change", () => {
-                document.getElementById('API Selecter').placeholder = document.getElementById('modelSelect').value;
-            });
-        </script>
-        
-		<button onclick="saveKeys()">Submit</button>
-        <label for="modelSelect">Model:</label>
-        <select id="modelSelect" aria-label="Model selection">
-            <option value="gemini">Gemini</option>
-            <option value="openai">OpenAI</option>
-            <option value="deepseek">DeepSeek</option>
-        </select>
-    </div>
+		<input type="text" id="apiKey" placeholder="Enter API Key">
+
+		<button onclick="saveKeys()">Save and Continue</button>
+	</div>
+
 	<script>
+		function loadExistingKey() {
+			const model = document.getElementById('modelSelect').value;
+			let existingKey = '';
+
+			if (model === 'gemini') {
+				existingKey = sessionStorage.getItem('geminiKey') || '';
+			} else if (model === 'openai') {
+				existingKey = sessionStorage.getItem('openaiKey') || '';
+			} else if (model === 'deepseek') {
+				existingKey = sessionStorage.getItem('deepseekKey') || '';
+			}
+
+			document.getElementById('apiKey').value = existingKey;
+		}
+
 		function saveKeys() {
-            if(document.getElementById('API Selecter').placeholder == "Gemini API Key")
-            {
-                sessionStorage.setItem('geminiKey', document.getElementById('API Selecter').value);
-            }
-			if(document.getElementById('API Selecter').placeholder == "OpenAI API Key")
-            {
-                sessionStorage.setItem('openaiKey', document.getElementById('API Selecter').value);
-            }
-            if(document.getElementById('API Selecter').placeholder == "DeepSeek API Key")
-            {
-                sessionStorage.setItem('deepseekKey', document.getElementById('API Selecter').value);
-            }
+			const model = document.getElementById('modelSelect').value;
+			const key = document.getElementById('apiKey').value.trim();
+
+			if (!key) {
+				alert('Please enter an API key.');
+				return;
+			}
+
+			if (model === 'gemini') {
+				sessionStorage.setItem('geminiKey', key);
+			} else if (model === 'openai') {
+				sessionStorage.setItem('openaiKey', key);
+			} else if (model === 'deepseek') {
+				sessionStorage.setItem('deepseekKey', key);
+			}
+			sessionStorage.setItem('modelChoice', model);
 			window.location.href = "/";
 		}
+
+		// Load the correct existing key on page load
+		document.addEventListener('DOMContentLoaded', loadExistingKey);
 	</script>
 </body>
 </html>

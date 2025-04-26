@@ -2,29 +2,28 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
-load_dotenv()  # load variables from .env into environment
+# Explicitly load .env from project root
+import os as _os
+_root = _os.path.dirname(_os.path.dirname(__file__))
+load_dotenv(_os.path.join(_root, '.env'))
+print(f"[DEBUG] Database URI: { _os.getenv('DATABASE_URL') }")
 from .extensions import db, migrate
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from flask_migrate import upgrade
 
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///quizpro.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db.init_app(app)
+# Initialize Alembic migrations
 migrate.init_app(app, db)
-# Automatically create tables and apply Alembic migrations on startup
-with app.app_context():
-    db.create_all()  # ensures tables exist for dev fallback
-    try:
-        upgrade()    # applies all pending migrations
-    except Exception as e:
-        # Log and continue if migrations fail (e.g., missing revisions)
-        print(f"Warning: could not apply migrations: {e}")
 
 # import models after extensions are set up to avoid circular imports
 from .models import Presentation, Slide, Question, ApiKey
+# Create tables now that all models (including ApiKey) are registered
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def index():

@@ -1,8 +1,28 @@
-/venv
+# Virtual environments
+venv/
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+
+# macOS Finder files
 .DS_Store
-<<<<<<< Updated upstream
-backend/__pycache__
-=======
+
+# Flask instance folder
+instance/
+
+# Environment variables file
 .env
-/instance
->>>>>>> Stashed changes
+
+# Local SQLite database
+quizpro.db
+
+# Flask-Migrate migration files
+migrations/
+
+# Editor and IDE directories
+.vscode/
+.idea/
+
+# Pytest cache
+.pytest_cache/

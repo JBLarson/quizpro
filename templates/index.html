@@ -33,40 +33,30 @@
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>QuizPro</h1>
-    <!-- Upload Section -->
-    <section id="upload-section">
-      <label for="pptx-file">Upload PowerPoint (.pptx):</label>
-      <input type="file" id="pptx-file" accept=".pptx">
-    </section>
-    <!-- Prompt Configuration -->
-    <section id="prompt-section">
-      <label for="tone">Tone:</label>
-      <select id="tone">
-        <option value="casual">Casual</option>
-        <option value="professional">Professional</option>
-      </select>
-      <label for="difficulty">Difficulty:</label>
-      <select id="difficulty">
-        <option value="easy">Easy</option>
-        <option value="medium">Medium</option>
-        <option value="hard">Hard</option>
-      </select>
-      <label for="style">Style:</label>
-      <select id="style">
-        <option value="multiple-choice">Multiple Choice</option>
-        <option value="short-answer">Short Answer</option>
-        <option value="free-response">Free Response</option>
-      </select>
-    </section>
-    <!-- Chat Interface -->
-    <section id="quiz-section">
-      <div id="chat"></div>
-      <input type="text" id="user-answer" placeholder="Type your answer...">
-      <button id="send-answer">Send</button>
-    </section>
-  </div>
-  <script type="module" src="/static/js/main.js"></script>
+	<div class="menu-bar">
+		<a href="/config">Config</a> |
+		<a href="/content">Content</a> |
+		<a href="/setup">API Keys</a>
+	</div>
+
+	<div class="container">
+		<h2>Chat</h2>
+		<div id="chatBox">
+			<!-- Chat messages will appear here -->
+		</div>
+
+		<input type="text" id="userInput" placeholder="Type your message...">
+		<button onclick="sendMessage()">Send</button>
+	</div>
+
+	<script>
+		function sendMessage() {
+			const input = document.getElementById('userInput').value.trim();
+			if (!input) return;
+
+			// TODO: Send message to backend and update chatBox
+			console.log('Sending message:', input);
+		}
+	</script>
 </body>
-</html> 
+</html>

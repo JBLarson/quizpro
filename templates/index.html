@@ -26,16 +26,6 @@
       <label for="pptx-file">Upload PowerPoint (.pptx):</label>
       <input type="file" id="pptx-file" accept=".pptx">
     </section>
-    <!-- API Key & Model Selection -->
-    <section id="api-section">
-      <label for="api-key">API Key:</label>
-      <input type="password" id="api-key" placeholder="Enter your API key">
-      <label for="model-select">Model:</label>
-      <select id="model-select">
-        <option value="openai">OpenAI</option>
-        <option value="deepseek">DeepSeek</option>
-      </select>
-    </section>
     <!-- Prompt Configuration -->
     <section id="prompt-section">
       <label for="tone">Tone:</label>
@@ -52,7 +42,8 @@
       <label for="style">Style:</label>
       <select id="style">
         <option value="multiple-choice">Multiple Choice</option>
-        <option value="open-ended">Open Ended</option>
+        <option value="short-answer">Short Answer</option>
+        <option value="free-response">Free Response</option>
       </select>
     </section>
     <!-- Chat Interface -->

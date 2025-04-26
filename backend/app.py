@@ -6,6 +6,7 @@ load_dotenv()  # load variables from .env into environment
 from .extensions import db, migrate
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
+from flask_migrate import upgrade
 
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///quizpro.db')
@@ -13,6 +14,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db.init_app(app)
 migrate.init_app(app, db)
+# Automatically create tables and apply Alembic migrations on startup
+with app.app_context():
+    db.create_all()  # ensures tables exist for dev fallback
+    try:
+        upgrade()    # applies all pending migrations
+    except Exception as e:
+        # Log and continue if migrations fail (e.g., missing revisions)
+        print(f"Warning: could not apply migrations: {e}")
 
 # import models after extensions are set up to avoid circular imports
 from .models import Presentation, Slide, Question, ApiKey
@@ -103,7 +112,4 @@ admin.add_view(ModelView(Slide,      db.session))
 admin.add_view(ModelView(Question,   db.session))
 
 if __name__ == '__main__':
-    # Create tables if they don't exist
-    with app.app_context():
-        db.create_all()
     app.run(debug=True) 

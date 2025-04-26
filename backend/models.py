@@ -21,4 +21,11 @@ class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     slide_id = db.Column(db.Integer, db.ForeignKey('slide.id'), nullable=False)
     prompt = db.Column(db.Text, nullable=False)
-    answer = db.Column(db.Text) 
+    answer = db.Column(db.Text)
+
+class ApiKey(db.Model):
+    __tablename__ = 'api_key'
+    id = db.Column(db.Integer, primary_key=True)
+    model = db.Column(db.String(50), nullable=False, unique=True)
+    key = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow) 

@@ -15,7 +15,7 @@ db.init_app(app)
 migrate.init_app(app, db)
 
 # import models after extensions are set up to avoid circular imports
-from .models import Presentation, Slide, Question
+from .models import Presentation, Slide, Question, ApiKey
 
 @app.route('/')
 def index():
@@ -80,10 +80,30 @@ def config():
 def content():
     return render_template('content.html')
 
+# Add endpoint to save API keys to the database
+@app.route('/api_key', methods=['POST'])
+def save_api_key():
+    data = request.get_json()
+    model = data.get('model')
+    key = data.get('key')
+    if not model or not key:
+        return jsonify({'error': 'Missing model or key'}), 400
+    api_key = ApiKey.query.filter_by(model=model).first()
+    if api_key:
+        api_key.key = key
+    else:
+        api_key = ApiKey(model=model, key=key)
+        db.session.add(api_key)
+    db.session.commit()
+    return jsonify({'status': 'success'}), 201
+
 admin = Admin(app, name="QuizPro Admin", template_mode="bootstrap4")
 admin.add_view(ModelView(Presentation, db.session))
 admin.add_view(ModelView(Slide,      db.session))
 admin.add_view(ModelView(Question,   db.session))
 
 if __name__ == '__main__':
+    # Create tables if they don't exist
+    with app.app_context():
+        db.create_all()
     app.run(debug=True) 

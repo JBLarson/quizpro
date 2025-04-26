@@ -56,15 +56,23 @@
 				return;
 			}
 
-			if (model === 'gemini') {
-				sessionStorage.setItem('geminiKey', key);
-			} else if (model === 'openai') {
-				sessionStorage.setItem('openaiKey', key);
-			} else if (model === 'deepseek') {
-				sessionStorage.setItem('deepseekKey', key);
-			}
-			sessionStorage.setItem('modelChoice', model);
-			window.location.href = "/";
+			// Persist API key in the database
+			fetch('/api_key', {
+				method: 'POST',
+				headers: {'Content-Type': 'application/json'},
+				body: JSON.stringify({model: model, key: key})
+			})
+			.then(response => {
+				if (!response.ok) throw new Error('Failed to save API key');
+				// Store locally for immediate use
+				sessionStorage.setItem(`${model}Key`, key);
+				sessionStorage.setItem('modelChoice', model);
+				window.location.href = '/';
+			})
+			.catch(error => {
+				console.error(error);
+				alert('Error saving API key to database.');
+			});
 		}
 
 		// Load the correct existing key on page load

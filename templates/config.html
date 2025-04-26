@@ -14,6 +14,7 @@
           <a href="/config">Config</a>
           <a href="/content">Content</a>
           <a href="/setup">API Keys</a>
+          <a href="{{ url_for('logout') }}">Logout</a>
         </div>
       </div>
 	<div class="container">
@@ -49,7 +50,7 @@
 			sessionStorage.setItem('tone', document.getElementById('tone').value);
 			sessionStorage.setItem('difficulty', document.getElementById('difficulty').value);
 			sessionStorage.setItem('style', document.getElementById('style').value);
-			window.location.href = "/chat";
+			window.location.href = "/";
 		}
 	</script>
 </body>

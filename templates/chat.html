@@ -17,6 +17,10 @@
 
   <div class="container">
     <h2>Question {{ index }} of {{ total }}</h2>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar" data-index="{{ index }}" data-total="{{ total }}"></div>
+    </div>
     <p>{{ question.prompt }}</p>
     <form method="POST">
       {% for letter, text in question.options.items() %}
@@ -41,6 +45,15 @@
         localStorage.setItem('theme', theme);
       });
     })();
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const bar = document.getElementById('progressBar');
+      const idx = parseInt(bar.getAttribute('data-index'), 10);
+      const tot = parseInt(bar.getAttribute('data-total'), 10);
+      if (tot > 0) {
+        bar.style.width = ((idx / tot) * 100) + '%';
+      }
+    });
   </script>
 </body>
 </html>

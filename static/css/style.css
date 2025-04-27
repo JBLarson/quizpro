@@ -148,3 +148,20 @@ button.theme-toggle:hover {
   margin: 0;
 }
 
+/* Progress bar styling */
+.progress-container {
+  width: 100%;
+  background: var(--input-border);
+  border-radius: 4px;
+  margin-bottom: 16px;
+  height: 8px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--button-bg);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+

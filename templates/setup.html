@@ -22,59 +22,59 @@
 		<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
 			<!-- API Key Section -->
 			<h3>Enter Your API Key</h3>
-			<label for="apiKey">Gemini API Key:</label>
-			<input type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required>
+			<label for="apiKey">API Key:</label>
+			<input type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required value="{{ keys.get('gemini', '') }}">
 
-			<!-- LLM Model Selection 
+			<!-- LLM Model Selection -->
 			<h3>Select LLM Model</h3>
 			<label for="modelSelect">Model:</label>
 			<select id="modelSelect" name="modelSelect" required>
 				<option value="gemini">Gemini</option>
-				<option value="openai">OpenAI</option>
-				<option value="deepseek">DeepSeek</option>
 			</select>
-      -->
+			<!-- Button to save/update the API key for the selected model -->
+			<button type="button" id="saveKeyBtn">Save API Key</button>
+
 			<!-- Upload PPTX Section -->
 			<h3>Upload PowerPoint (.pptx)</h3>
 			<label for="pptxFile">Choose a PPTX file:</label>
-      <input type="file" id="pptxFile" name="pptxFile">
-      <button type="button" id="uploadBtn">Upload</button>
-      
-      <textarea name="pastedText" id="pastedText" rows="10" cols="50" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
-      
-      <script>
-      document.getElementById('uploadBtn').addEventListener('click', function() {
-          const fileInput = document.getElementById('pptxFile');
-          const file = fileInput.files[0];
-      
-          if (!file) {
-              alert('Please select a PPTX file.');
-              return;
-          }
-      
-          const formData = new FormData();
-          formData.append('file', file);
-      
-          fetch('/upload_pptx', {
-              method: 'POST',
-              body: formData
-          })
-          .then(response => {
-              if (!response.ok) throw new Error('Failed to upload PPTX');
-              return response.json();
-          })
-          .then(data => {
-              // Combine all slide text
-              const text = data.slides.map(slide => slide.text.join('\n')).join('\n\n---\n\n');
-              document.getElementById('pastedText').value = text;
-          })
-          .catch(error => {
-              console.error(error);
-              alert('Failed to upload PPTX.');
-          });
-      });
-      </script>
-      
+			<input type="file" id="pptxFile" name="pptxFile">
+			<button type="button" id="uploadBtn">Upload</button>
+			
+			<textarea name="pastedText" id="pastedText" rows="10" cols="50" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
+			
+			<script>
+			document.getElementById('uploadBtn').addEventListener('click', function() {
+				const fileInput = document.getElementById('pptxFile');
+				const file = fileInput.files[0];
+			
+				if (!file) {
+					alert('Please select a PPTX file.');
+					return;
+				}
+			
+				const formData = new FormData();
+				formData.append('file', file);
+			
+				fetch('/upload_pptx', {
+					method: 'POST',
+					body: formData
+				})
+				.then(response => {
+					if (!response.ok) throw new Error('Failed to upload PPTX');
+					return response.json();
+				})
+				.then(data => {
+					// Combine all slide text
+					const text = data.slides.map(slide => slide.text.join('\n')).join('\n\n---\n\n');
+					document.getElementById('pastedText').value = text;
+				})
+				.catch(error => {
+					console.error(error);
+					alert('Failed to upload PPTX.');
+				});
+			});
+			</script>
+			
 			<br>
 			<button type="submit">Submit All</button>
 		</form>
@@ -114,6 +114,18 @@
 
 
 	<script>
+		// Populate API key input based on selected model
+		// Parse server-side API keys into JS object
+		const apiKeys = JSON.parse('{{ keys|tojson|safe }}');
+		const modelSelect = document.getElementById('modelSelect');
+		const apiInput = document.getElementById('apiKey');
+		function populateKey() {
+			const model = modelSelect.value;
+			apiInput.value = apiKeys[model] || '';
+		}
+		modelSelect.addEventListener('change', populateKey);
+		document.addEventListener('DOMContentLoaded', populateKey);
+
 		// Load existing API Key if available
 		function loadExistingKey() {
 			const model = document.getElementById('modelSelect').value;
@@ -130,7 +142,7 @@
 			document.getElementById('apiKey').value = existingKey;
 		}
 
-		// Save API Key
+		// Save API Key to database and update on page
 		function saveKeys() {
 			const model = document.getElementById('modelSelect').value;
 			const key = document.getElementById('apiKey').value.trim();
@@ -147,6 +159,8 @@
 			})
 			.then(response => {
 				if (!response.ok) throw new Error('Failed to save API key');
+				// Update local JS store and dropdown
+				apiKeys[model] = key;
 				sessionStorage.setItem(`${model}Key`, key);
 				sessionStorage.setItem('modelChoice', model);
 				alert('API key saved!');
@@ -156,6 +170,8 @@
 				alert('Error saving API key.');
 			});
 		}
+		// Wire up Save API Key button
+		document.getElementById('saveKeyBtn').addEventListener('click', saveKeys);
 
 		// Upload PPTX
 		function uploadPptx() {
@@ -203,9 +219,6 @@
 			sessionStorage.setItem('style', document.getElementById('style').value);
 			alert('Config saved!');
 		}
-
-		// Auto-load existing key when page loads
-		document.addEventListener('DOMContentLoaded', loadExistingKey);
 	</script>
 </body>
 </html>

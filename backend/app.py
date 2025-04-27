@@ -31,7 +31,7 @@ except ImportError:
 
 # Create Flask app
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
-# 1) Make Python's built-in zip() available in Jinja templates
+# Make Python's built-in zip() available in Jinja templates
 app.jinja_env.globals.update(zip=zip)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
@@ -49,6 +49,16 @@ login_manager.login_view = 'login'  # redirect unauthorized users here
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+# ----- Helper to fetch the stored API key -----
+def get_user_api_key(model_name="gemini"):
+    """Retrieve the current_user's API key for the given model."""
+    record = ApiKey.query.filter_by(user_id=current_user.id, model=model_name).first()
+    if not record:
+        flash(f"No API key saved for '{model_name}'. Please add one under Setup.", "error")
+        return None
+    return record.key
 
 
 # ----- Authentication Routes -----
@@ -91,6 +101,23 @@ def logout():
 
 
 # ----- Main Quiz Flow -----
+@app.route('/api_key', methods=['POST'])
+@login_required
+def save_api_key():
+    data = request.get_json() or {}
+    model = data.get('model') or 'gemini'
+    key = data.get('key')
+    if not key:
+        return jsonify(error="Missing API key"), 400
+    # Upsert API key record for the user and model
+    record = ApiKey.query.filter_by(user_id=current_user.id, model=model).first()
+    if record:
+        record.key = key
+    else:
+        db.session.add(ApiKey(user_id=current_user.id, model=model, key=key))
+    db.session.commit()
+    return jsonify(status="ok", model=model, key=key), 200
+
 @app.route('/')
 @login_required
 def index():
@@ -100,37 +127,46 @@ def index():
 @app.route('/setup', methods=['GET', 'POST'])
 @login_required
 def setup():
+    # Fetch stored Gemini API key for current user
+    gemini_record = ApiKey.query.filter_by(user_id=current_user.id, model='gemini').first()
+    keys = {'gemini': gemini_record.key if gemini_record else ''}
     if request.method == 'POST':
-        api_key = request.form.get('apiKey')
-        content = request.form.get('pastedText', '').strip()
+        selected_model = 'gemini'
+        # Use form API key input or fallback to stored
+        api_key = request.form.get('apiKey') or keys['gemini']
+        # Persist API key in database
+        if api_key:
+            if gemini_record:
+                gemini_record.key = api_key
+            else:
+                gemini_record = ApiKey(user_id=current_user.id, model='gemini', key=api_key)
+                db.session.add(gemini_record)
+            db.session.commit()
+            keys['gemini'] = api_key
+        # Retrieve content inputs
+        pptx_file = request.files.get('pptxFile')
+        pasted_text = request.form.get('pastedText')
 
-        if not content:
-            flash("Please upload a PPTX or paste some text first.", "error")
-            return render_template('setup.html')
+        if pptx_file and pptx_file.filename:
+            json_data = pptx_to_json(pptx_file)
+            # Prepare the prompt for the LLM
+            prompt = f"Generate 20 quiz questions based on the following content: {json_data}. " \
+                     f"Separate each question with <|Q|>."
+            questions = generate_questions(api_key, 'gemini', prompt)
 
-        prompt = (
-            "Generate 20 quiz questions based on the following content:\n\n"
-            f"{content}\n\n"
-            "Separate each question with <|Q|>."
-        )
-        # Call Gemini via GenAI SDK
-        questions = generate_questions(api_key, prompt)
+            if questions:
+                session['questions'] = questions.split('<|Q|>')
+                session['current_question_index'] = 0
+                return redirect(url_for('chat'))  # Redirect to the chat page
+            else:
+                flash("Error generating questions. Please check the API configuration.", "error")
+                return render_template('setup.html', keys=keys)
+        else:
+            print("No PPTX file uploaded or file has no name.")
+            return render_template('setup.html', keys=keys)
 
-        # Fallback to dummy if Gemini returns nothing
-        if not questions or not questions.strip():
-            questions = (
-                "1. Dummy question?<|Q|>"
-                "2. Another dummy question?<|Q|>"
-                "3. Final dummy question?<|Q|>"
-            )
-
-        qs = [q.strip() for q in questions.split('<|Q|>') if q.strip()]
-        session['questions']              = qs
-        session['answers']                = []
-        session['current_question_index'] = 0
-        return redirect(url_for('chat'))
-
-    return render_template('setup.html')
+    # GET request: render setup with stored Gemini key
+    return render_template('setup.html', keys=keys)
 
 
 @app.route('/chat', methods=['GET', 'POST'])
@@ -250,10 +286,12 @@ def success():
 
 
 # ----- Helper Functions -----
-def generate_questions(api_key, prompt):
+def generate_questions(api_key, model_name, prompt):
     """Configure per-call and generate via Gemini."""
+    if not api_key:
+        return ""
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel(f"{model_name}-2.0-flash")
     response = model.generate_content(prompt)
     return getattr(response, "text", response)
 

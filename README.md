@@ -57,10 +57,10 @@ pip install -r reqs.txt
 Once your admin accepts the invite, they can manage the database.
 
 ## Hackathon Submission Checklist
-- [ ] Project description (this file)
-- [ ] Source code (this repo)
-- [ ] Screenshot of the app
-- [ ] Demo video (2 min, with voiceover)
+- [x] Project description (this file)
+- [x] Source code (this repo)
+- [x] Screenshot of the app
+- [x] Demo video (2 min, with voiceover)
 
 ---
 

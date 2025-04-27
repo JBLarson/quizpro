@@ -22,10 +22,10 @@
 		<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
 			<!-- API Key Section -->
 			<h3>Enter Your API Key</h3>
-			<label for="apiKey">API Key:</label>
+			<label for="apiKey">Gemini API Key:</label>
 			<input type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required>
 
-			<!-- LLM Model Selection -->
+			<!-- LLM Model Selection 
 			<h3>Select LLM Model</h3>
 			<label for="modelSelect">Model:</label>
 			<select id="modelSelect" name="modelSelect" required>
@@ -33,7 +33,7 @@
 				<option value="openai">OpenAI</option>
 				<option value="deepseek">DeepSeek</option>
 			</select>
-
+      -->
 			<!-- Upload PPTX Section -->
 			<h3>Upload PowerPoint (.pptx)</h3>
 			<label for="pptxFile">Choose a PPTX file:</label>
@@ -49,8 +49,10 @@
 		</form>
 
 		<hr>
+		<button onclick="saveConfig()">Save Config</button>
 
-		<!-- Config Section -->
+	</div>
+		<!-- Config Section 
 		<h3>Configure Chat Behavior</h3>
 
 		<label for="tone">Tone:</label>
@@ -74,9 +76,9 @@
 			<option value="free-response">Free Response</option>
 		</select>
 
-		<button onclick="saveConfig()">Save Config</button>
+    -->
 
-	</div>
+
 
 	<script>
 		// Load existing API Key if available

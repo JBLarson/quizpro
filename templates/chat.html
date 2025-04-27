@@ -21,7 +21,6 @@
     <div class="progress-container">
       <div class="progress-bar" id="progressBar" data-index="{{ index }}" data-total="{{ total }}"></div>
     </div>
-    <p>{{ question.prompt }}</p>
     <form method="POST">
       {% for letter, text in question.options.items() %}
         <div class="option">

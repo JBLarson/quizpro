@@ -200,6 +200,8 @@ def setup():
             parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
         # Initialize quiz in session and redirect
         session['questions'] = parsed_qs
+        # Store desired total for progress display (always 20 questions)
+        session['desired_total'] = 20
         session['answers'] = []
         session['current_question_index'] = 0
         return redirect(url_for('chat'))
@@ -213,6 +215,10 @@ def setup():
 def chat():
     qs  = session.get('questions', [])
     idx = session.get('current_question_index', 0)
+    # Skip any non-MCQ entries (e.g., free-response placeholder) at the start
+    while idx < len(qs) and not qs[idx].get('options'):
+        idx += 1
+    session['current_question_index'] = idx
 
     if request.method == 'POST':
         ans = request.form.get('answer', '').strip()
@@ -226,10 +232,12 @@ def chat():
             return redirect(url_for('results'))
 
     current = qs[idx] if idx < len(qs) else None
+    # Use desired_total for display; fall back to actual count
+    display_total = session.get('desired_total', len(qs))
     return render_template('chat.html',
                            question=current,
                            index=idx+1,
-                           total=len(qs))
+                           total=display_total)
 
 
 @app.route('/results')
@@ -283,6 +291,63 @@ def generate_questions(api_key, model_name, prompt):
     model = genai.GenerativeModel(f"{model_name}-2.0-flash")
     response = model.generate_content(prompt)
     return getattr(response, "text", response)
+
+
+@app.route('/adaptive_followup', methods=['POST'])
+@login_required
+def adaptive_followup():
+    """Generate follow-up MCQs on topics you got wrong."""
+    # Fetch stored API key
+    api_key = get_user_api_key()
+    if not api_key:
+        return redirect(url_for('setup'))
+    # Get current quiz and answers from session
+    qs = session.get('questions', [])
+    ans = session.get('answers', [])
+    # Filter incorrect questions
+    wrong_qs = [q for q, a in zip(qs, ans) if a != q.get('answer')]
+    if not wrong_qs:
+        flash('No incorrect questions to generate follow-ups.', 'info')
+        return redirect(url_for('results'))
+    # Build payload of prompts and answers
+    qas = [{'prompt': q['prompt'], 'options': q['options'], 'answer': q['answer']} for q in wrong_qs]
+    payload = json.dumps(qas)
+    # Prompt LLM for similar-topic questions
+    prompt_text = (
+        f"Here are the questions you answered incorrectly with the correct answers and options: {payload}. "
+        "Now generate 10 new multiple-choice quiz questions on similar topics. "
+        "For each, provide four options (A–D) and include 'Answer: X'. "
+        "Separate each question with <|Q|>."
+    )
+    raw = generate_questions(api_key, 'gemini', prompt_text)
+    if not raw:
+        flash('Error generating follow-up questions. Please try again.', 'error')
+        return redirect(url_for('results'))
+    # Parse generated follow-up questions
+    import re
+    items = raw.split('<|Q|>')
+    followups = []
+    for item in items:
+        lines = [l.strip() for l in item.splitlines() if l.strip()]
+        if not lines:
+            continue
+        question_text = re.sub(r'^\d+\.\s*', '', lines[0])
+        options = {}
+        correct = None
+        for line in lines[1:]:
+            m = re.match(r'^([A-D])[\)\.\:]\s*(.*)', line)
+            if m:
+                options[m.group(1)] = m.group(2).strip()
+                continue
+            m2 = re.search(r'Answer[:\s]*([A-D])', line, re.IGNORECASE)
+            if m2:
+                correct = m2.group(1)
+        followups.append({'prompt': question_text, 'options': options, 'answer': correct})
+    # Restart session with follow-up questions
+    session['questions'] = followups
+    session['answers'] = []
+    session['current_question_index'] = 0
+    return redirect(url_for('chat'))
 
 
 if __name__ == '__main__':

@@ -37,6 +37,9 @@
         <form action="{{ url_for('retry_incorrect') }}" method="post" style="display:inline">
           <button type="submit">Retry Incorrect</button>
         </form>
+        <form action="{{ url_for('adaptive_followup') }}" method="post" style="display:inline; margin-left:8px;">
+          <button type="submit">Similar Topic Quiz</button>
+        </form>
       {% endif %}
       <form action="{{ url_for('setup') }}" method="get" style="display:inline; margin-left:8px;">
         <button type="submit">Run Another Quiz</button>

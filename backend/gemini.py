@@ -1,18 +1,23 @@
-import genai
-"""Module to send prompts to Gemini LLM; no import-time execution or JSON parsing here."""
+# backend/gemini.py
 
-client = genai.Client(api_key="AIzaSyB4Ie0Q-MM3PTtc4WhI1yVEsfIsyeOAbGY")
+import google.generativeai as genai
+import os
 
-def promptGemini(client, prompt_text):
+# Configure the SDK with a default key from the environment (for legacy endpoints)
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
+# Expose the module itself as `client` so `from .gemini import client` continues to work
+client = genai
+
+def promptGemini(client_arg, prompt_text):
     """Send the prompt_text to Gemini and return its response content."""
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt_text
-    )
-    return getattr(response, 'text', response)
+    # Ignore client_arg (legacy); use the globally-configured genai
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    response = model.generate_content(prompt_text)
+    return getattr(response, "text", response)
 
-# prompt for requesting multiple choice questions
 def requestMC(contentInput):
+    """Builds a standard multiple-choice prompt based on input content."""
     standardPrompt = f"""I need you to act as if you are a professional tutor. Analyze the following input content.
     You're going to provide me with 30 multiple choice questions, BASED SOLELY on the provided input content.
     The format of each question should look like this
@@ -24,3 +29,4 @@ def requestMC(contentInput):
         *   **(D)**
     The **()** denotes the correct answer. Questions MUST follow this template.
     """
+    return standardPrompt

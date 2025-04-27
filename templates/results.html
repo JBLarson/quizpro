@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizPro — Results</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h2>All Done!</h2>
+    <ul>
+      {% for q, a in zip(questions, answers) %}
+        <li>
+          <strong>{{ q }}</strong><br>
+          Your answer: {{ a }}
+        </li>
+      {% endfor %}
+    </ul>
+    <a href="{{ url_for('setup') }}">Run another quiz</a>
+  </div>
+</body>
+</html>

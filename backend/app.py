@@ -1,173 +1,87 @@
+# backend/app.py
+
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session
 from flask_cors import CORS
-import os
+import os, json
 from dotenv import load_dotenv
 from .questions import *
-# Explicitly load .env from project root
 import os as _os
-_root = _os.path.dirname(_os.path.dirname(__file__))
-load_dotenv(_os.path.join(_root, '.env'))
-print(f"[DEBUG] Database URI: { _os.getenv('DATABASE_URL') }")
 from .extensions import db, migrate, login_manager
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_login import login_user, logout_user, current_user, login_required
-from .models import ApiKey
-from .models import QuizSession, QuizQuestion
+from .models import User, ApiKey, QuizSession, QuizQuestion
 from .parser_pptx_json import pptx_to_json
+
+# Real Gemini SDK
+import google.generativeai as genai
+
+# Load environment variables
+_root = _os.path.dirname(_os.path.dirname(__file__))
+load_dotenv(_os.path.join(_root, '.env'))
+print(f"[DEBUG] Database URI: {os.getenv('DATABASE_URL')}")
+
+# Legacy Gemini integration fallback
 try:
     from .gemini import client, promptGemini
 except ImportError:
-    # Gemini module might not be available during migrations
     client = None
     def promptGemini(c, p):
         raise RuntimeError("Gemini integration unavailable")
-import json
-import datetime
 
+# Create Flask app
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
-# Set a secret key for Flask session management
+# 1) Make Python's built-in zip() available in Jinja templates
+app.jinja_env.globals.update(zip=zip)
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///quizpro.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 CORS(app)
 db.init_app(app)
-# Initialize Alembic migrations
 migrate.init_app(app, db)
 
-# Initialize login manager
 login_manager.init_app(app)
+login_manager.login_view = 'login'  # redirect unauthorized users here
 
-# User loader for Flask-Login
+# Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
-    from .models import User
     return User.query.get(int(user_id))
 
-@app.route('/')
-@login_required
-def index():
-    return render_template('index.html')
 
-# route for api key setup
-@app.route('/setup', methods=['GET', 'POST'])
-@login_required
-def setup():
-    if request.method == 'POST':
-        pptx_file = request.files.get('pptxFile')
-        selected_model = request.form.get('modelSelect')
-        api_key = request.form.get('apiKey')
-        pasted_text = request.form.get('pastedText')  # Retrieve pasted text
-
-        # Debugging: Print the values received
-        print(f"API Key: {api_key}, Model: {selected_model}, PPTX File: {pptx_file}, Pasted Text: {pasted_text}")
-
-        if pptx_file and pptx_file.filename:  # Check if the file is present and has a filename
-            json_data = pptx_to_json(pptx_file)  # Convert PPTX to JSON
-            print(f"JSON Data: {json_data}")  # Debugging output
-
-            # Prepare the prompt for the LLM
-            prompt = f"Generate 20 quiz questions based on the following content: {json_data}. " \
-                     f"Separate each question with <|Q|>."
-
-            # Debugging: Print the prompt and API key
-            print(f"Prompt: {prompt}")
-
-            # Send data to the LLM
-            questions = generate_questions(api_key, selected_model, prompt)
-
-            # Check if questions were generated
-            if questions:
-                print(f"Generated Questions: {questions}")
-                session['questions'] = questions.split('<|Q|>')
-                session['current_question_index'] = 0
-                print(f"Session Questions: {session['questions']}")
-                return redirect(url_for('chat'))  # Redirect to the chat page
-            else:
-                print("No questions were generated.")
-        else:
-            print("No PPTX file uploaded or file has no name.")
-
-    return render_template('setup.html')
-
-# route for chat configuration
-@app.route('/config', methods=['GET', 'POST'])
-@login_required
-def config():
-    if request.method == 'POST':
-        print("Form data received:")
-        print(request.form)  # Print all form data
-        print(request.files)  # Print all file data
-
-        # Access specific fields
-        api_key = request.form.get('apiKey')
-        pptx_file = request.files.get('pptxFile')
-        pasted_text = request.form.get('pastedText')
-        selected_model = request.form.get('modelSelect')
-
-        print(f"API Key: {api_key}, PPTX File: {pptx_file}, Pasted Text: {pasted_text}, Model: {selected_model}")
-
-        # Add your logic to handle the data
-
-        return redirect(url_for('setup'))  # Change to your desired redirect
-
-    return render_template('setup.html')  # Render the setup.html for GET requests
-
-# route for adding content
-@app.route('/content')
-@login_required
-def content():
-    return render_template('setup.html')
-
-# Add endpoint to save API keys per user
-@app.route('/api_key', methods=['POST'])
-@login_required
-def save_api_key(api_key, model):
-    # Logic to save the API key
-    if not model or not api_key:
-        return jsonify({'error': 'Missing model or key'}), 400
-    # Store one key per user+model
-    existing_key = ApiKey.query.filter_by(user_id=current_user.id, model=model).first()
-    if existing_key:
-        existing_key.key = api_key
-    else:
-        new_key = ApiKey(user_id=current_user.id, model=model, key=api_key)
-        db.session.add(new_key)
-    db.session.commit()
-    return jsonify({'status': 'success'}), 201
-
+# ----- Authentication Routes -----
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        email = request.form['email']
+        email    = request.form['email']
         password = request.form['password']
-        from .models import User
         if User.query.filter_by(email=email).first():
-            return 'Email already registered', 400
+            flash('Email already registered', 'error')
+            return render_template('register.html')
         user = User(email=email)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
         login_user(user)
-        return redirect(url_for('index'))
+        return redirect(url_for('setup'))
     return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
+        email    = request.form['email']
         password = request.form['password']
-        from .models import User
         user = User.query.filter_by(email=email).first()
-        if not user:
-            flash('No account found with that email. Please register first.')
-            return render_template('login.html')
-        if not user.check_password(password):
-            flash('Incorrect password. Please try again.')
+        if not user or not user.check_password(password):
+            flash('Invalid email or password', 'error')
             return render_template('login.html')
         login_user(user)
         return redirect(url_for('setup'))
     return render_template('login.html')
+
 
 @app.route('/logout')
 @login_required
@@ -175,43 +89,133 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-admin = Admin(app, name="QuizPro Admin", template_mode="bootstrap4")
-admin.add_view(ModelView(ApiKey, db.session))
+
+# ----- Main Quiz Flow -----
+@app.route('/')
+@login_required
+def index():
+    return render_template('index.html')
 
 
+@app.route('/setup', methods=['GET', 'POST'])
+@login_required
+def setup():
+    if request.method == 'POST':
+        api_key = request.form.get('apiKey')
+        content = request.form.get('pastedText', '').strip()
 
+        if not content:
+            flash("Please upload a PPTX or paste some text first.", "error")
+            return render_template('setup.html')
+
+        prompt = (
+            "Generate 20 quiz questions based on the following content:\n\n"
+            f"{content}\n\n"
+            "Separate each question with <|Q|>."
+        )
+        # Call Gemini via GenAI SDK
+        questions = generate_questions(api_key, prompt)
+
+        # Fallback to dummy if Gemini returns nothing
+        if not questions or not questions.strip():
+            questions = (
+                "1. Dummy question?<|Q|>"
+                "2. Another dummy question?<|Q|>"
+                "3. Final dummy question?<|Q|>"
+            )
+
+        qs = [q.strip() for q in questions.split('<|Q|>') if q.strip()]
+        session['questions']              = qs
+        session['answers']                = []
+        session['current_question_index'] = 0
+        return redirect(url_for('chat'))
+
+    return render_template('setup.html')
+
+
+@app.route('/chat', methods=['GET', 'POST'])
+@login_required
+def chat():
+    qs  = session.get('questions', [])
+    idx = session.get('current_question_index', 0)
+
+    if request.method == 'POST':
+        ans = request.form.get('answer', '').strip()
+        session['answers'].append(ans)
+        idx += 1
+        session['current_question_index'] = idx
+
+        if idx < len(qs):
+            return redirect(url_for('chat'))
+        else:
+            return redirect(url_for('results'))
+
+    current = qs[idx] if idx < len(qs) else None
+    return render_template('chat.html',
+                           question=current,
+                           index=idx+1,
+                           total=len(qs))
+
+
+@app.route('/results')
+@login_required
+def results():
+    return render_template('results.html',
+                           questions=session.get('questions', []),
+                           answers=session.get('answers', []))
+
+
+# ----- PPTX Upload Endpoint -----
+@app.route('/upload_pptx', methods=['POST'])
+@login_required
+def upload_pptx():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({'error': 'No file provided'}), 400
+    data   = pptx_to_json(file)
+    slides = data.get('slides', [])
+    return jsonify({'slides': slides}), 200
+
+
+# ----- Legacy / Optional Endpoints -----
 @app.route('/generate_quiz', methods=['POST'])
 @login_required
 def generate_quiz():
-    payload = request.get_json() or {}
-    slides = payload.get('slides', [])
-    count = payload.get('count', len(slides))
+    payload    = request.get_json() or {}
+    slides     = payload.get('slides', [])
+    count      = payload.get('count', len(slides))
     slide_text = '\n'.join(slides)
-    prompt = f"Generate {count} quiz questions from the following slide texts. Separate each with <|Q|>:\n{slide_text}"
-    response = promptGemini(client, prompt)
-    questions_raw = getattr(response, 'text', response)
-    items = questions_raw.split('<|Q|>')
-    session = QuizSession(user_id=current_user.id)
-    db.session.add(session)
+    prompt     = (
+        f"Generate {count} quiz questions from the following slide texts. "
+        "Separate each with <|Q|>:\n" + slide_text
+    )
+    # using legacy promptGemini
+    response   = promptGemini(client, prompt)
+    raw        = getattr(response, 'text', response)
+    items      = raw.split('<|Q|>')
+    session_db = QuizSession(user_id=current_user.id)
+    db.session.add(session_db)
     db.session.commit()
-    for idx, item in enumerate(items):
-        q_text = item.strip()
-        if not q_text:
-            continue
-        q = QuizQuestion(session_id=session.id, index=idx, prompt=q_text)
-        db.session.add(q)
+    for idx, itm in enumerate(items):
+        text = itm.strip()
+        if text:
+            q = QuizQuestion(session_id=session_db.id, index=idx, prompt=text)
+            db.session.add(q)
     db.session.commit()
-    first = QuizQuestion.query.filter_by(session_id=session.id, index=0).first()
-    return jsonify({'session_id': session.id, 'question_id': first.id, 'prompt': first.prompt}), 201
+    first = QuizQuestion.query.filter_by(session_id=session_db.id, index=0).first()
+    return jsonify({'session_id': session_db.id,
+                    'question_id': first.id,
+                    'prompt': first.prompt}), 201
+
 
 @app.route('/answer_question', methods=['POST'])
 @login_required
 def answer_question():
-    payload = request.get_json() or {}
-    session_id = payload.get('session_id')
+    payload     = request.get_json() or {}
+    session_id  = payload.get('session_id')
     question_id = payload.get('question_id')
-    answer = payload.get('answer')
-    question = QuizQuestion.query.get_or_404(question_id)
+    answer      = payload.get('answer')
+    question    = QuizQuestion.query.get_or_404(question_id)
     question.user_answer = answer
     db.session.commit()
     next_q = QuizQuestion.query.filter(
@@ -222,125 +226,37 @@ def answer_question():
         return jsonify({'question_id': next_q.id, 'prompt': next_q.prompt}), 200
     return jsonify({'done': True}), 200
 
+
 @app.route('/evaluate_quiz', methods=['POST'])
 @login_required
 def evaluate_quiz():
-    payload = request.get_json() or {}
-    session_id = payload.get('session_id')
-    session = QuizSession.query.get_or_404(session_id)
-    qas = [{'prompt': q.prompt, 'answer': q.user_answer} for q in session.questions]
+    payload    = request.get_json() or {}
+    session_db = QuizSession.query.get_or_404(payload.get('session_id'))
+    qas        = [{'prompt': q.prompt, 'answer': q.user_answer} for q in session_db.questions]
     eval_prompt = (
         f"Here are the questions and your answers: {json.dumps(qas)}. "
-        "Determine which are correct or wrong, then generate follow-up questions to close learning gaps, separate each with <|Q|>."
+        "Determine which are correct or wrong, then generate follow-up questions "
+        "to close learning gaps, separate each with <|Q|>."
     )
-    response = promptGemini(client, eval_prompt)
-    followup_raw = getattr(response, 'text', response)
-    items = followup_raw.split('<|Q|>')
+    resp  = promptGemini(client, eval_prompt)
+    items = getattr(resp, 'text', resp).split('<|Q|>')
     return jsonify({'followup_questions': items}), 200
+
 
 @app.route('/success')
 @login_required
 def success():
-    return render_template('success.html')  # Create a success.html template
-
-def save_pasted_text(pasted_text):
-    # Implement your logic to save the pasted text
-    # For example, you could save it to the database or process it as needed
-    print(f"Saving pasted text: {pasted_text}")
-    # You can add your database logic here if needed
-
-def generate_questions(api_key, model, prompt):
-    # Implement the logic to send the prompt to the LLM and get the response
-    response = call_llm_api(api_key, model, prompt)  # Ensure this function is defined
-    print(f"LLM Response: {response}")  # Debugging output
-    return response  # Return the raw response from the LLM
-
-@app.route('/chat', methods=['GET', 'POST'])
-@login_required
-def chat():
-    current_index = session.get('current_question_index', 0)
-    questions = session.get('questions', [])
-
-    if request.method == 'POST':
-        user_answer = request.form.get('userAnswer')
-        # Store the user's answer in the database associated with the question
-        store_user_answer(current_index, user_answer)  # Implement this function
-
-        # Move to the next question
-        current_index += 1
-        session['current_question_index'] = current_index
-
-        if current_index < len(questions):
-            return redirect(url_for('chat'))  # Redirect to show the next question
-        else:
-            # All questions answered, evaluate answers
-            evaluate_answers(session['user_id'], questions)  # Implement this function
-            return redirect(url_for('results'))  # Redirect to results page
-
-    # Display the current question
-    current_question = questions[current_index] if current_index < len(questions) else None
-    return render_template('chat.html', question=current_question)
-
-def store_user_answer(question_index, user_answer):
-    # Logic to store the user's answer in the database
-    # Associate the answer with the question based on the index
-    pass
-
-def evaluate_answers(user_id, questions):
-    # Logic to send the user's answers to the LLM for evaluation
-    user_answers = get_user_answers(user_id)  # Implement this function to retrieve answers
-    prompt = f"Evaluate the following answers: {user_answers}. " \
-             f"Determine which are correct or wrong and provide follow-up questions."
-    response = call_llm_api(api_key, model, prompt)  # Implement this function
-    return response  # Return the evaluation results
-
-def call_llm_api(api_key, model, prompt):
-    import requests
-
-    url = "https://api.gemini.com/v1/actual_endpoint"  # Replace with the actual endpoint
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "model": model,
-        "prompt": prompt
-    }
-
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-        return response.json().get('text', '')  # Adjust based on the actual response structure
-    else:
-        print(f"Error calling LLM API: {response.status_code}, {response.text}")
-        return ""
-
-@app.route('/test_upload', methods=['GET', 'POST'])
-def test_upload():
-    if request.method == 'POST':
-        file = request.files.get('file')
-        if file:
-            return f"File uploaded: {file.filename}"
-        else:
-            return "No file uploaded."
-    return '''
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit">
-    </form>
-    '''
+    return render_template('success.html')
 
 
-@app.route('/upload_pptx', methods=['POST'])
-@login_required
-def upload_pptx():
-    file = request.files.get('file')
-    if not file:
-        return jsonify({'error': 'No file provided'}), 400
-
-    data = pptx_to_json(file)
-    slides = data.get('slides', [])
-    return jsonify({'slides': slides}), 200
+# ----- Helper Functions -----
+def generate_questions(api_key, prompt):
+    """Configure per-call and generate via Gemini."""
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    response = model.generate_content(prompt)
+    return getattr(response, "text", response)
 
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)

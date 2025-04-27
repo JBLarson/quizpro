@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizPro — Question {{ index }} of {{ total }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="menu-bar-wrapper">
+    <div class="menu-bar">
+      <a href="{{ url_for('chat') }}">Chat</a>
+      <a href="{{ url_for('setup') }}">Setup</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Question {{ index }} of {{ total }}</h2>
+    <p>{{ question }}</p>
+    <form method="POST">
+      <input type="text" name="answer" placeholder="Your answer…" required autofocus>
+      <button type="submit">Next</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -247,12 +247,20 @@ def chat():
 def results():
     qs = session.get('questions', [])
     ans = session.get('answers', [])
-    # Determine if any answers were incorrect
-    incorrect = any(a != q.get('answer') for q, a in zip(qs, ans))
+    # Count incorrect answers
+    wrong_count = sum(1 for q, a in zip(qs, ans) if a != q.get('answer'))
+    total_answered = len(ans)
+    # Calculate percentage wrong (rounded to nearest integer)
+    percent_wrong = int((wrong_count / total_answered) * 100) if total_answered else 0
+    # Determine if any answers were incorrect for UI flags
+    incorrect = wrong_count > 0
     return render_template('results.html',
                            questions=qs,
                            answers=ans,
-                           incorrect=incorrect)
+                           incorrect=incorrect,
+                           wrong_count=wrong_count,
+                           total_answered=total_answered,
+                           percent_wrong=percent_wrong)
 
 
 # Route to retry only the questions the user got wrong

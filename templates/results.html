@@ -10,6 +10,7 @@
 <body>
   <div class="container">
     <h2>All Done!</h2>
+    <p>You answered {{ total_answered }} questions and got {{ total_answered - wrong_count }} correct ({{ 100 - percent_wrong }}%).</p>
     <ul>
       {% for q, a in zip(questions, answers) %}
         <li>

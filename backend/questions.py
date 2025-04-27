@@ -17,8 +17,9 @@ def extract_text_from_pptx(parsed_pptx):
 
 	return '\n\n---\n\n'.join(text_blocks)
 
-
+'''
 pptx_json = load_json("json_files/powerpoint.json")
 pptx_text = extract_text_from_pptx(pptx_json)
 
 print(f"\n\n{pptx_text}")
+'''

@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, f
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+from .questions import *
 # Explicitly load .env from project root
 import os as _os
 _root = _os.path.dirname(_os.path.dirname(__file__))
@@ -177,31 +178,7 @@ def logout():
 admin = Admin(app, name="QuizPro Admin", template_mode="bootstrap4")
 admin.add_view(ModelView(ApiKey, db.session))
 
-### Quiz workflow endpoints
-@app.route('/upload_pptx', methods=['POST'])
-@login_required
-def upload_pptx():
-    file = request.files.get('file')
-    if not file:
-        return jsonify({'error': 'No file provided'}), 400
 
-    # Parse PPTX to JSON
-    data = pptx_to_json(file)
-    slides = data.get('slides', [])
-
-    # Create a directory for JSON files if it doesn't exist
-    json_dir = os.path.join(os.path.dirname(__file__), 'json_files')
-    os.makedirs(json_dir, exist_ok=True)
-
-    # Generate a unique filename based on timestamp and user
-    filename = "powerpoint.json"
-    file_path = os.path.join(json_dir, filename)
-    
-    # Save the JSON data to a file
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump({'slides': slides}, f, indent=4, ensure_ascii=False)
-
-    return jsonify({'slides': slides}), 200
 
 @app.route('/generate_quiz', methods=['POST'])
 @login_required
@@ -351,6 +328,19 @@ def test_upload():
         <input type="submit">
     </form>
     '''
+
+
+@app.route('/upload_pptx', methods=['POST'])
+@login_required
+def upload_pptx():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({'error': 'No file provided'}), 400
+
+    data = pptx_to_json(file)
+    slides = data.get('slides', [])
+    return jsonify({'slides': slides}), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True) 

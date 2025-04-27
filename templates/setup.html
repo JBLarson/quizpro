@@ -37,13 +37,44 @@
 			<!-- Upload PPTX Section -->
 			<h3>Upload PowerPoint (.pptx)</h3>
 			<label for="pptxFile">Choose a PPTX file:</label>
-			<input type="file" id="pptxFile" name="pptxFile" accept=".pptx" required>
-			<button onclick="uploadPptx()">Upload</button>
-
-			<!-- Paste Text Section -->
-			<h3>Or Paste Text</h3>
-			<textarea id="pastedText" name="pastedText" rows="10" cols="50" placeholder="Paste your text here..."></textarea>
-
+      <input type="file" id="pptxFile" name="pptxFile">
+      <button type="button" id="uploadBtn">Upload</button>
+      
+      <textarea name="pastedText" id="pastedText" rows="10" cols="50" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
+      
+      <script>
+      document.getElementById('uploadBtn').addEventListener('click', function() {
+          const fileInput = document.getElementById('pptxFile');
+          const file = fileInput.files[0];
+      
+          if (!file) {
+              alert('Please select a PPTX file.');
+              return;
+          }
+      
+          const formData = new FormData();
+          formData.append('file', file);
+      
+          fetch('/upload_pptx', {
+              method: 'POST',
+              body: formData
+          })
+          .then(response => {
+              if (!response.ok) throw new Error('Failed to upload PPTX');
+              return response.json();
+          })
+          .then(data => {
+              // Combine all slide text
+              const text = data.slides.map(slide => slide.text.join('\n')).join('\n\n---\n\n');
+              document.getElementById('pastedText').value = text;
+          })
+          .catch(error => {
+              console.error(error);
+              alert('Failed to upload PPTX.');
+          });
+      });
+      </script>
+      
 			<br>
 			<button type="submit">Submit All</button>
 		</form>

@@ -1,7 +1,43 @@
+/* Define theme variables */
+:root {
+  --bg-color: #f7f7fa;
+  --text-color: #333333;
+  --container-bg: #ffffff;
+  --container-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  --button-bg: #4f8cff;
+  --button-color: #ffffff;
+  --button-disabled-bg: #cccccc;
+  --input-border: #cccccc;
+  --card-bg: #fafbfc;
+  --menu-bg: #f7f7fa;
+  --menu-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  --link-color: #333333;
+  --link-hover-bg: #e0e7ff;
+  --link-hover-color: #1d4ed8;
+  --toggle-color: #000000; /* icon color for light mode */
+}
+.dark {
+  --bg-color: #121212;
+  --text-color: #e4e4e4;
+  --container-bg: #1e1e1e;
+  --container-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  --button-bg: #4f8cff;
+  --button-color: #ffffff;
+  --button-disabled-bg: #555555;
+  --input-border: #444444;
+  --card-bg: #212121;
+  --menu-bg: #1e1e1e;
+  --menu-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  --link-color: #e4e4e4;
+  --link-hover-bg: #333333;
+  --link-hover-color: #4ea0ff;
+  --toggle-color: #ffffff; /* icon color for dark mode */
+}
 
 body {
   font-family: Arial, sans-serif;
-  background: #f7f7fa;
+  background: var(--bg-color);
+  color: var(--text-color);
   margin: 0;
   padding: 0;
   padding-top: 60px;
@@ -10,33 +46,33 @@ body {
 .container {
   max-width: 600px;
   margin: 40px auto;
-  background: #fff;
+  background: var(--container-bg);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  box-shadow: var(--container-shadow);
   padding: 32px 24px;
 }
 
 h1 {
   text-align: center;
-  color: #3a3a4a;
+  color: var(--text-color);
 }
 
 input, select, button {
   margin: 8px 0;
   padding: 8px;
   border-radius: 4px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--input-border);
 }
 
 button {
-  background: #4f8cff;
-  color: #fff;
+  background: var(--button-bg);
+  color: var(--button-color);
   border: none;
   cursor: pointer;
 }
 
 button:disabled {
-  background: #ccc;
+  background: var(--button-disabled-bg);
 }
 
 #chat {
@@ -44,47 +80,71 @@ button:disabled {
   max-height: 300px;
   overflow-y: auto;
   margin-bottom: 16px;
-  border: 1px solid #eee;
+  border: 1px solid var(--input-border);
   border-radius: 4px;
   padding: 12px;
-  background: #fafbfc;
-} 
+  background: var(--card-bg);
+}
 
 /* menu styling */
 
 .menu-bar-wrapper {
-	width: 100%;
-	display: flex;
-	justify-content: flex-end;
-	position: fixed;
-	top: 0;
-	left: 0;
-	background: #f7f7fa;
-	padding: 12px 0;
-	z-index: 1000;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: var(--menu-bg);
+  padding: 12px 0;
+  z-index: 1000;
+  box-shadow: var(--menu-shadow);
 }
 
 .menu-bar {
-	max-width: 600px;
-	width: 100%;
-	display: flex;
-	justify-content: flex-end;
-	gap: 32px;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 32px;
 }
 
 .menu-bar a {
-	text-decoration: none;
-	color: #333;
-	font-weight: bold;
-	font-size: 16px;
-	padding: 8px 12px;
-	border-radius: 6px;
-	transition: background-color 0.2s ease, color 0.2s ease;
+  text-decoration: none;
+  color: var(--link-color);
+  font-weight: bold;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .menu-bar a:hover {
-	background-color: #e0e7ff;
-	color: #1d4ed8;
+  background-color: var(--link-hover-bg);
+  color: var(--link-hover-color);
+}
+
+/* Theme toggle icon styling */
+button.theme-toggle {
+  background: none;
+  border: none;
+  color: var(--toggle-color);
+  font-size: 20px;
+  padding: 4px;
+  margin: 0 0 0 12px;
+  cursor: pointer;
+}
+button.theme-toggle:hover {
+  filter: brightness(0.8);
+}
+
+/* Remove older toggle button rules */
+.menu-bar button#themeToggle { /* override any older rules */
+  background: none;
+  color: var(--toggle-color);
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 

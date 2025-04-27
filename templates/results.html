@@ -32,7 +32,25 @@
         </li>
       {% endfor %}
     </ul>
-    <a href="{{ url_for('setup') }}">Run another quiz</a>
+    <div class="menu-bar-wrapper">
+      <div class="menu-bar">
+        <button id="themeToggle" type="button">🌓</button>
+        <a href="{{ url_for('setup') }}">Run another quiz</a>
+      </div>
+    </div>
   </div>
+  <script>
+    (function() {
+      const toggle = document.getElementById('themeToggle');
+      const root = document.documentElement;
+      const current = localStorage.getItem('theme') || 'light';
+      if (current === 'dark') root.classList.add('dark');
+      toggle.addEventListener('click', () => {
+        root.classList.toggle('dark');
+        const theme = root.classList.contains('dark') ? 'dark' : 'light';
+        localStorage.setItem('theme', theme);
+      });
+    })();
+  </script>
 </body>
 </html>

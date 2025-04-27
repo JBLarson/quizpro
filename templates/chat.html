@@ -10,6 +10,7 @@
 <body>
   <div class="menu-bar-wrapper">
     <div class="menu-bar">
+      <button id="themeToggle" type="button">🌓</button>
       <a href="{{ url_for('logout') }}">Logout</a>
     </div>
   </div>
@@ -27,5 +28,19 @@
       <button type="submit">Next</button>
     </form>
   </div>
+
+  <script>
+    (function() {
+      const toggle = document.getElementById('themeToggle');
+      const root = document.documentElement;
+      const current = localStorage.getItem('theme') || 'light';
+      if (current === 'dark') root.classList.add('dark');
+      toggle.addEventListener('click', () => {
+        root.classList.toggle('dark');
+        const theme = root.classList.contains('dark') ? 'dark' : 'light';
+        localStorage.setItem('theme', theme);
+      });
+    })();
+  </script>
 </body>
 </html>

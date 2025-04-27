@@ -9,6 +9,8 @@
 </head>
 <body>
 	<div class="menu-bar-wrapper">
+		<!-- Theme toggle outside of menu-bar for proper spacing -->
+		<button id="themeToggle" class="theme-toggle" type="button" title="Toggle light/dark mode">🌓</button>
 		<div class="menu-bar">
 			<a href="{{ url_for('logout') }}">Logout</a>
 		</div>
@@ -217,6 +219,21 @@
 			sessionStorage.setItem('style', document.getElementById('style').value);
 			alert('Config saved!');
 		}
+	</script>
+	<script>
+		(function() {
+			const toggle = document.getElementById('themeToggle');
+			const root = document.documentElement;
+			// Apply saved theme
+			const current = localStorage.getItem('theme') || 'light';
+			if (current === 'dark') root.classList.add('dark');
+			// Toggle on click
+			toggle.addEventListener('click', () => {
+				root.classList.toggle('dark');
+				const theme = root.classList.contains('dark') ? 'dark' : 'light';
+				localStorage.setItem('theme', theme);
+			});
+		})();
 	</script>
 </body>
 </html>

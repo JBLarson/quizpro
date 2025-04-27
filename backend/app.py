@@ -52,9 +52,30 @@ def index():
 @login_required
 def setup():
     if request.method == 'POST':
-        # Handle the combined input here
-        # You can process the API key, uploaded PPTX, and configuration settings
-        pass  # Implement your logic here
+        api_key = request.form.get('apiKey')
+        pptx_file = request.files.get('pptxFile')
+        pasted_text = request.form.get('pastedText')
+        selected_model = request.form.get('modelSelect')  # Get the selected model
+
+        # Debugging: Print the values to check if they are being captured correctly
+        print(f"API Key: {api_key}, Model: {selected_model}, PPTX File: {pptx_file}, Pasted Text: {pasted_text}")
+
+        # Handle API Key
+        if api_key:
+            # Call save_api_key with the model and key
+            response = save_api_key(api_key, selected_model)  # Pass the model and key
+
+        # Handle PPTX Upload
+        if pptx_file:
+            data = pptx_to_json(pptx_file)  # Process the PPTX file
+            # Handle the data as needed
+
+        # Handle Pasted Text
+        if pasted_text:
+            save_pasted_text(pasted_text)  # Implement your logic for pasted text
+
+        # Redirect or render a success message
+        return redirect(url_for('some_success_page'))  # Change to your desired redirect
 
     return render_template('setup.html')
 
@@ -79,7 +100,7 @@ def save_api_key():
     key = data.get('key')
     if not model or not key:
         return jsonify({'error': 'Missing model or key'}), 400
-    # store one key per user+model
+    # Store one key per user+model
     api_key = ApiKey.query.filter_by(user_id=current_user.id, model=model).first()
     if api_key:
         api_key.key = key
@@ -125,7 +146,7 @@ def login():
             flash('Incorrect password. Please try again.')
             return render_template('login.html')
         login_user(user)
-        return redirect(url_for('index'))
+        return redirect(url_for('setup'))
     return render_template('login.html')
 
 @app.route('/logout')

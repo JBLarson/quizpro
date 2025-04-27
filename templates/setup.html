@@ -19,34 +19,33 @@
 	<div class="container">
 		<h2>Setup Your Session</h2>
 
-		<!-- API Key Section -->
-		<h3>Enter Your API Key</h3>
+		<form method="post" enctype="multipart/form-data">
+			<!-- API Key Section -->
+			<h3>Enter Your API Key</h3>
+			<label for="apiKey">API Key:</label>
+			<input type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required>
 
-		<label for="modelSelect">Select Model:</label>
-		<select id="modelSelect" onchange="loadExistingKey()">
-			<option value="gemini">Gemini</option>
-			<option value="openai">OpenAI</option>
-			<option value="deepseek">DeepSeek</option>
-		</select>
+			<!-- LLM Model Selection -->
+			<h3>Select LLM Model</h3>
+			<label for="modelSelect">Model:</label>
+			<select id="modelSelect" name="modelSelect" required>
+				<option value="gemini">Gemini</option>
+				<option value="openai">OpenAI</option>
+				<option value="deepseek">DeepSeek</option>
+			</select>
 
-		<label for="apiKey">API Key:</label>
-		<input type="text" id="apiKey" placeholder="Enter API Key">
-		<button onclick="saveKeys()">Save API Key</button>
+			<!-- Upload PPTX Section -->
+			<h3>Upload PowerPoint (.pptx)</h3>
+			<label for="pptxFile">Choose a PPTX file:</label>
+			<input type="file" id="pptxFile" name="pptxFile" accept=".pptx">
 
-		<hr>
+			<!-- Paste Text Section -->
+			<h3>Or Paste Text</h3>
+			<textarea id="pastedText" name="pastedText" rows="10" cols="50" placeholder="Paste your text here..."></textarea>
 
-		<!-- Content Section -->
-		<h3>Upload or Paste Content</h3>
-
-		<h4>Upload PowerPoint (.pptx)</h4>
-		<label for="pptxFile">Choose a PPTX file:</label>
-		<input type="file" id="pptxFile" accept=".pptx">
-		<button onclick="uploadPptx()">Upload PPTX</button>
-
-		<h4>Or Paste Text</h4>
-		<textarea id="pastedText" rows="10" cols="50" placeholder="Paste your text here..."></textarea>
-		<br>
-		<button onclick="saveText()">Submit Text</button>
+			<br>
+			<button type="submit">Submit All</button>
+		</form>
 
 		<hr>
 
@@ -54,21 +53,21 @@
 		<h3>Configure Chat Behavior</h3>
 
 		<label for="tone">Tone:</label>
-		<select id="tone">
+		<select id="tone" name="tone">
 			<option value="formal">Formal</option>
 			<option value="casual">Casual</option>
 			<option value="friendly">Friendly</option>
 		</select>
 
 		<label for="difficulty">Difficulty:</label>
-		<select id="difficulty">
+		<select id="difficulty" name="difficulty">
 			<option value="easy">Easy</option>
 			<option value="medium">Medium</option>
 			<option value="hard">Hard</option>
 		</select>
 
 		<label for="style">Style:</label>
-		<select id="style">
+		<select id="style" name="style">
 			<option value="multiple-choice">Multiple Choice</option>
 			<option value="short-answer">Short Answer</option>
 			<option value="free-response">Free Response</option>

@@ -15,9 +15,14 @@
 
   <div class="container">
     <h2>Question {{ index }} of {{ total }}</h2>
-    <p>{{ question }}</p>
+    <p>{{ question.prompt }}</p>
     <form method="POST">
-      <input type="text" name="answer" placeholder="Your answer…" required autofocus>
+      {% for letter, text in question.options.items() %}
+        <div class="option">
+          <input type="radio" id="opt{{ letter }}" name="answer" value="{{ letter }}" required>
+          <label for="opt{{ letter }}">{{ letter }}) {{ text }}</label>
+        </div>
+      {% endfor %}
       <button type="submit">Next</button>
     </form>
   </div>

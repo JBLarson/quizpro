@@ -149,13 +149,43 @@ def setup():
 
         if pptx_file and pptx_file.filename:
             json_data = pptx_to_json(pptx_file)
-            # Prepare the prompt for the LLM
-            prompt = f"Generate 20 quiz questions based on the following content: {json_data}. " \
-                     f"Separate each question with <|Q|>."
+            # Prepare the prompt for multiple-choice quiz questions with answers
+            prompt = (
+                f"Generate 20 multiple-choice quiz questions based solely on the following content: {json_data}. "
+                "For each question, provide four options labeled A, B, C, D. "
+                "After listing the options, include 'Answer: X' where X is the correct letter. "
+                "Separate each question with <|Q|>."
+            )
             questions = generate_questions(api_key, 'gemini', prompt)
 
             if questions:
-                session['questions'] = questions.split('<|Q|>')
+                # Parse multiple-choice questions into structured dicts
+                import re
+                raw_items = questions.split('<|Q|>')
+                parsed_qs = []
+                for item in raw_items:
+                    lines = [l.strip() for l in item.splitlines() if l.strip()]
+                    if not lines:
+                        continue
+                    # Remove leading numbering (e.g., '1.')
+                    question_text = re.sub(r'^\d+\.\s*', '', lines[0])
+                    options = {}
+                    correct = None
+                    for line in lines[1:]:
+                        # Match option lines like 'A) text' or 'A. text'
+                        m = re.match(r'^([A-D])[\)\.\:]\s*(.*)', line)
+                        if m:
+                            letter = m.group(1)
+                            options[letter] = m.group(2).strip()
+                            continue
+                        # Match answer line 'Answer: B'
+                        m2 = re.search(r'Answer[:\s]*([A-D])', line, re.IGNORECASE)
+                        if m2:
+                            correct = m2.group(1)
+                    parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
+                # Initialize quiz session in HTTP session
+                session['questions'] = parsed_qs
+                session['answers'] = []
                 session['current_question_index'] = 0
                 return redirect(url_for('chat'))  # Redirect to the chat page
             else:

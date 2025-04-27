@@ -12,8 +12,22 @@
     <ul>
       {% for q, a in zip(questions, answers) %}
         <li>
-          <strong>{{ q }}</strong><br>
-          Your answer: {{ a }}
+          <strong>{{ q.prompt }}</strong><br>
+          <!-- Display options -->
+          <ul class="options-list">
+            {% for letter, text in q.options.items() %}
+              <li{% if letter == a %} class="user-choice"{% endif %}{% if letter == q.answer %} class="correct-choice"{% endif %}>
+                {{ letter }}) {{ text }}
+              </li>
+            {% endfor %}
+          </ul>
+          <div>Your answer: <strong>{{ a }}) {{ q.options[a] if q.options[a] else '' }}</strong></div>
+          <div>Correct answer: <strong>{{ q.answer }}) {{ q.options[q.answer] }}</strong></div>
+          {% if a == q.answer %}
+            <div class="result correct">Correct!</div>
+          {% else %}
+            <div class="result incorrect">Incorrect</div>
+          {% endif %}
         </li>
       {% endfor %}
     </ul>

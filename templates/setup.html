@@ -17,92 +17,98 @@
 	</div>
 
 	<div class="container">
-		<h2>Setup Your Session</h2>
+		<div class="card">
+			<h2 class="header">Setup Your Session</h2>
 
-		<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
-			<!-- API Key Section -->
-			<h3>Enter Your API Key</h3>
-			<label for="apiKey">API Key:</label>
-			<input type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required value="{{ keys.get('gemini', '') }}">
+			<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
+				<!-- API Key Section -->
+				<div class="form-group">
+					<label for="apiKey">API Key:</label>
+					<div class="input-with-button">
+						<input class="form-control" type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required value="{{ keys.get('gemini', '') }}">
+						<button type="button" id="saveKeyBtn" class="btn">Save API Key</button>
+					</div>
+				</div>
 
-			<!-- LLM Model Selection -->
-			<h3>Select LLM Model</h3>
-			<label for="modelSelect">Model:</label>
-			<select id="modelSelect" name="modelSelect" required>
-				<option value="gemini">Gemini</option>
-			</select>
-			<!-- Button to save/update the API key for the selected model -->
-			<button type="button" id="saveKeyBtn">Save API Key</button>
+				<!-- LLM Model Selection -->
+				<h3>Select LLM Model</h3>
+				<label for="modelSelect">Model:</label>
+				<select id="modelSelect" name="modelSelect" required>
+					<option value="gemini">Gemini</option>
+				</select>
 
-			<!-- Upload PPTX Section -->
-			<h3>Upload PowerPoint (.pptx)</h3>
-			<label for="pptxFile">Choose a PPTX file:</label>
-			<input type="file" id="pptxFile" name="pptxFile">
-			<button type="button" id="uploadBtn">Upload</button>
-			
-			<textarea name="pastedText" id="pastedText" rows="10" cols="50" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
-			
-			<script>
-			document.getElementById('uploadBtn').addEventListener('click', function() {
-				const fileInput = document.getElementById('pptxFile');
-				const file = fileInput.files[0];
-			
-				if (!file) {
-					alert('Please select a PPTX file.');
-					return;
-				}
-			
-				const formData = new FormData();
-				formData.append('file', file);
-			
-				fetch('/upload_pptx', {
-					method: 'POST',
-					body: formData
-				})
-				.then(response => {
-					if (!response.ok) throw new Error('Failed to upload PPTX');
-					return response.json();
-				})
-				.then(data => {
-					// Combine all slide text
-					const text = data.slides.map(slide => slide.text.join('\n')).join('\n\n---\n\n');
-					document.getElementById('pastedText').value = text;
-				})
-				.catch(error => {
-					console.error(error);
-					alert('Failed to upload PPTX.');
+				<!-- Upload PPTX Section -->
+				<div class="form-group">
+					<label for="pptxFile">Choose PPTX:</label>
+					<input class="form-control" type="file" id="pptxFile" name="pptxFile">
+					<button type="button" id="uploadBtn" class="btn">Upload</button>
+				</div>
+				
+				<div class="form-group">
+					<textarea class="form-control" name="pastedText" id="pastedText" rows="10" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
+				</div>
+				
+				<script>
+				document.getElementById('uploadBtn').addEventListener('click', function() {
+					const fileInput = document.getElementById('pptxFile');
+					const file = fileInput.files[0];
+				
+					if (!file) {
+						alert('Please select a PPTX file.');
+						return;
+					}
+				
+					const formData = new FormData();
+					formData.append('file', file);
+				
+					fetch('/upload_pptx', {
+						method: 'POST',
+						body: formData
+					})
+					.then(response => {
+						if (!response.ok) throw new Error('Failed to upload PPTX');
+						return response.json();
+					})
+					.then(data => {
+						// Combine all slide text
+						const text = data.slides.map(slide => slide.text.join('\n')).join('\n\n---\n\n');
+						document.getElementById('pastedText').value = text;
+					})
+					.catch(error => {
+						console.error(error);
+						alert('Failed to upload PPTX.');
+					});
 				});
-			});
-			</script>
-			
-			<br>
-			<button type="submit">Submit All</button>
-		</form>
+				</script>
+				
+				<button type="submit" class="btn">Submit All</button>
+			</form>
+		</div>  <!-- end card -->
+	</div>  <!-- end container -->
 
-	</div>
-		<!-- Config Section 
-		<h3>Configure Chat Behavior</h3>
+	<!-- Config Section 
+	<h3>Configure Chat Behavior</h3>
 
-		<label for="tone">Tone:</label>
-		<select id="tone" name="tone">
-			<option value="formal">Formal</option>
-			<option value="casual">Casual</option>
-			<option value="friendly">Friendly</option>
-		</select>
+	<label for="tone">Tone:</label>
+	<select id="tone" name="tone">
+		<option value="formal">Formal</option>
+		<option value="casual">Casual</option>
+		<option value="friendly">Friendly</option>
+	</select>
 
-		<label for="difficulty">Difficulty:</label>
-		<select id="difficulty" name="difficulty">
-			<option value="easy">Easy</option>
-			<option value="medium">Medium</option>
-			<option value="hard">Hard</option>
-		</select>
+	<label for="difficulty">Difficulty:</label>
+	<select id="difficulty" name="difficulty">
+		<option value="easy">Easy</option>
+		<option value="medium">Medium</option>
+		<option value="hard">Hard</option>
+	</select>
 
-		<label for="style">Style:</label>
-		<select id="style" name="style">
-			<option value="multiple-choice">Multiple Choice</option>
-			<option value="short-answer">Short Answer</option>
-			<option value="free-response">Free Response</option>
-		</select>
+	<label for="style">Style:</label>
+	<select id="style" name="style">
+		<option value="multiple-choice">Multiple Choice</option>
+		<option value="short-answer">Short Answer</option>
+		<option value="free-response">Free Response</option>
+	</select>
 
     <hr>
 

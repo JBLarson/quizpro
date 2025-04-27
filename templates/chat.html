@@ -16,21 +16,23 @@
   </div>
 
   <div class="container">
-    <h2>Question {{ index }} of {{ total }}</h2>
-    <!-- Progress Bar -->
-    <div class="progress-container">
-      <div class="progress-bar" id="progressBar" data-index="{{ index }}" data-total="{{ total }}"></div>
-    </div>
-    <form method="POST">
-      {% for letter, text in question.options.items() %}
-        <div class="option">
-          <input type="radio" id="opt{{ letter }}" name="answer" value="{{ letter }}" required>
-          <label for="opt{{ letter }}">{{ letter }}) {{ text }}</label>
-        </div>
-      {% endfor %}
-      <button type="submit">Next</button>
-    </form>
-  </div>
+    <div class="card">
+      <h2 class="header">Question {{ index }} of {{ total }}</h2>
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar" data-index="{{ index }}" data-total="{{ total }}"></div>
+      </div>
+      <form method="POST">
+        {% for letter, text in question.options.items() %}
+          <div class="form-group option">
+            <input class="form-control" type="radio" id="opt{{ letter }}" name="answer" value="{{ letter }}" required>
+            <label for="opt{{ letter }}">{{ letter }}) {{ text }}</label>
+          </div>
+        {% endfor %}
+        <button type="submit" class="btn">Next</button>
+      </form>
+    </div> <!-- end card -->
+  </div> <!-- end container -->
 
   <script>
     (function() {

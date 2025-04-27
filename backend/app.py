@@ -235,9 +235,31 @@ def chat():
 @app.route('/results')
 @login_required
 def results():
+    qs = session.get('questions', [])
+    ans = session.get('answers', [])
+    # Determine if any answers were incorrect
+    incorrect = any(a != q.get('answer') for q, a in zip(qs, ans))
     return render_template('results.html',
-                           questions=session.get('questions', []),
-                           answers=session.get('answers', []))
+                           questions=qs,
+                           answers=ans,
+                           incorrect=incorrect)
+
+
+# Route to retry only the questions the user got wrong
+@app.route('/retry_incorrect', methods=['POST'])
+@login_required
+def retry_incorrect():
+    qs = session.get('questions', [])
+    ans = session.get('answers', [])
+    # Filter to only questions where user's answer != correct
+    retry_qs = [q for q, a in zip(qs, ans) if a != q.get('answer')]
+    if not retry_qs:
+        flash('No incorrect questions to retry.', 'info')
+        return redirect(url_for('results'))
+    session['questions'] = retry_qs
+    session['answers'] = []
+    session['current_question_index'] = 0
+    return redirect(url_for('chat'))
 
 
 # ----- PPTX Upload Endpoint -----

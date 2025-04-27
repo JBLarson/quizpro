@@ -32,10 +32,19 @@
         </li>
       {% endfor %}
     </ul>
+    <div class="results-actions">
+      {% if incorrect %}
+        <form action="{{ url_for('retry_incorrect') }}" method="post" style="display:inline">
+          <button type="submit">Retry Incorrect</button>
+        </form>
+      {% endif %}
+      <form action="{{ url_for('setup') }}" method="get" style="display:inline; margin-left:8px;">
+        <button type="submit">Run Another Quiz</button>
+      </form>
+    </div>
     <div class="menu-bar-wrapper">
       <div class="menu-bar">
         <button id="themeToggle" type="button">🌓</button>
-        <a href="{{ url_for('setup') }}">Run another quiz</a>
       </div>
     </div>
   </div>

@@ -164,13 +164,13 @@ def setup():
             flash("Please upload a PPTX and/or paste some text.", "error")
             return render_template('setup.html', keys=keys)
         content_str = '\n\n'.join(content_parts)
-        # Prepare the prompt for multiple-choice quiz questions with answers
+        # Prompt LLM: no intros, start immediately with questions
         prompt = (
-            f"Generate 20 multiple-choice quiz questions based solely on the following content: {content_str}. "
-            "Only generate questions on substantive topics and concepts; ignore slide metadata such as presenter names and slide header dates. "
+            f"Please list exactly 20 multiple-choice quiz questions based solely on the following content: {content_str}. "
+            "Do not include any introductory or explanatory text—start directly with '1.'. "
+            "Only generate questions on substantive topics and concepts; ignore metadata such as presenter names and slide header dates. "
             "However, if a date is part of the substantive content (e.g., date of an event), you may create questions about it. "
-            "For each question, provide four options labeled A, B, C, D. "
-            "After listing the options, include 'Answer: X' where X is the correct letter. "
+            "For each question, provide four options labeled A, B, C, D, then 'Answer: X' where X is the correct option. "
             "Separate each question with <|Q|>."
         )
         # Generate questions and parse to structured dicts
@@ -197,7 +197,9 @@ def setup():
                 m2 = re.search(r'Answer[:\s]*([A-D])', line, re.IGNORECASE)
                 if m2:
                     correct = m2.group(1)
-            parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
+            # Only keep entries with a valid correct answer and exactly 4 options
+            if correct and len(options) == 4:
+                parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
         # Initialize quiz in session and redirect
         session['questions'] = parsed_qs
         # Store desired total for progress display (always 20 questions)
@@ -232,12 +234,12 @@ def chat():
             return redirect(url_for('results'))
 
     current = qs[idx] if idx < len(qs) else None
-    # Use desired_total for display; fall back to actual count
-    display_total = session.get('desired_total', len(qs))
+    # Always display the actual number of questions in the session
+    total_questions = len(qs)
     return render_template('chat.html',
                            question=current,
                            index=idx+1,
-                           total=display_total)
+                           total=total_questions)
 
 
 @app.route('/results')
@@ -267,6 +269,8 @@ def retry_incorrect():
     session['questions'] = retry_qs
     session['answers'] = []
     session['current_question_index'] = 0
+    # Update display total to match retry set
+    session['desired_total'] = len(retry_qs)
     return redirect(url_for('chat'))
 
 
@@ -309,22 +313,25 @@ def adaptive_followup():
     if not wrong_qs:
         flash('No incorrect questions to generate follow-ups.', 'info')
         return redirect(url_for('results'))
-    # Build payload of prompts and answers
-    qas = [{'prompt': q['prompt'], 'options': q['options'], 'answer': q['answer']} for q in wrong_qs]
-    payload = json.dumps(qas)
-    # Prompt LLM for similar-topic questions
+    # Build a textual list of the mis-answered prompts
+    import re
+    payload_prompts = "\n".join([
+        f"{i+1}. {re.sub(r'^\d+\.\s*', '', q['prompt'])}" for i, q in enumerate(wrong_qs)
+    ])
+    # Always generate exactly 10 follow-up questions
+    num_followups = 10
+    # Prompt LLM for follow-up quiz on the same topics, phrased differently
     prompt_text = (
-        f"Here are the questions you answered incorrectly with the correct answers and options: {payload}. "
-        "Now generate 10 new multiple-choice quiz questions on similar topics. "
-        "For each, provide four options (A–D) and include 'Answer: X'. "
-        "Separate each question with <|Q|>."
+        f"Here are the questions you answered incorrectly:\n{payload_prompts}\n"
+        f"Please generate 10 new multiple-choice questions on these same topics, phrased differently. "
+        "Provide four options labeled A, B, C, D, then 'Answer: X' for the correct option. "
+        "Separate each question with <|Q|> and start immediately without any extra text."
     )
     raw = generate_questions(api_key, 'gemini', prompt_text)
     if not raw:
         flash('Error generating follow-up questions. Please try again.', 'error')
         return redirect(url_for('results'))
     # Parse generated follow-up questions
-    import re
     items = raw.split('<|Q|>')
     followups = []
     for item in items:
@@ -342,11 +349,15 @@ def adaptive_followup():
             m2 = re.search(r'Answer[:\s]*([A-D])', line, re.IGNORECASE)
             if m2:
                 correct = m2.group(1)
-        followups.append({'prompt': question_text, 'options': options, 'answer': correct})
+        # Only include true MCQs with 4 options
+        if correct and len(options) == 4:
+            followups.append({'prompt': question_text, 'options': options, 'answer': correct})
     # Restart session with follow-up questions
     session['questions'] = followups
     session['answers'] = []
     session['current_question_index'] = 0
+    # Update display total to match follow-up set
+    session['desired_total'] = len(followups)
     return redirect(url_for('chat'))
 
 

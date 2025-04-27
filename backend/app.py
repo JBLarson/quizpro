@@ -99,19 +99,21 @@ def config():
 def content():
     return render_template('content.html')
 
-# Add endpoint to save API keys to the database
+# Add endpoint to save API keys per user
 @app.route('/api_key', methods=['POST'])
+@login_required
 def save_api_key():
     data = request.get_json()
     model = data.get('model')
     key = data.get('key')
     if not model or not key:
         return jsonify({'error': 'Missing model or key'}), 400
-    api_key = ApiKey.query.filter_by(model=model).first()
+    # store one key per user+model
+    api_key = ApiKey.query.filter_by(user_id=current_user.id, model=model).first()
     if api_key:
         api_key.key = key
     else:
-        api_key = ApiKey(model=model, key=key)
+        api_key = ApiKey(user_id=current_user.id, model=model, key=key)
         db.session.add(api_key)
     db.session.commit()
     return jsonify({'status': 'success'}), 201

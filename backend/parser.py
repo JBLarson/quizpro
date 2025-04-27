@@ -14,7 +14,6 @@ def pptx_to_json(pptx_file):
                 slide_data = pptx.read(filename)
                 slide_json = parse_slide(slide_data)
                 pptx_json["slides"].append(slide_json)
-
     return pptx_json
 
 def parse_slide(slide_data):
@@ -34,9 +33,21 @@ filepath = ''
 for file in os.listdir("../pptxfiles"):
     if file.endswith(".pptx"):
         filepath = os.path.join("../pptxfiles", file)
-        print(filepath)
 
 pptx_file = filepath
 pptx_json = pptx_to_json(pptx_file)
 
-print(json.dumps(pptx_json, indent=2))
+def getJSON():
+    return json.dumps(pptx_json, indent=2)
+
+from google import genai
+
+client = genai.Client(api_key="AIzaSyB4Ie0Q-MM3PTtc4WhI1yVEsfIsyeOAbGY")
+
+def promptGemini():
+    json = getJSON()
+    response = client.models.generate_content(model="gemini-2.0-flash", contents="Give me a Summary of the meaningful text in this JSON file and Give Example Multiple Choice questions:" + json)
+    return response
+response = promptGemini()
+print(response.text)
+

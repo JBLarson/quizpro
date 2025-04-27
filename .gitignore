@@ -3,6 +3,7 @@ venv/
 
 # Python bytecode and cache
 __pycache__/
+backend/__pycache__/
 *.py[cod]
 
 # macOS Finder files

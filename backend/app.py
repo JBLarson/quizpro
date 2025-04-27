@@ -47,14 +47,13 @@ def setup():
 @app.route('/config')
 @login_required
 def config():
-    return render_template('config.html')
-
+    return render_template('setup.html')
 
 # route for adding content
 @app.route('/content')
 @login_required
 def content():
-    return render_template('content.html')
+    return render_template('setup.html')
 
 # Add endpoint to save API keys per user
 @app.route('/api_key', methods=['POST'])
@@ -73,6 +72,12 @@ def save_api_key():
         api_key = ApiKey(user_id=current_user.id, model=model, key=key)
         db.session.add(api_key)
     db.session.commit()
+    return jsonify({'status': 'success'}), 201
+
+@app.route('/pptx', methods=['POST'])
+def pptxRetrieval():
+    data = request.json.get('data')
+    session['stored_data'] = data
     return jsonify({'status': 'success'}), 201
 
 @app.route('/register', methods=['GET', 'POST'])

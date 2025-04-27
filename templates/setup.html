@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>API Key Setup</title>
+	<title>Setup</title>
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 	<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon/favicon.ico') }}">
 </head>
@@ -11,28 +11,75 @@
 	<div class="menu-bar-wrapper">
 		<div class="menu-bar">
 			<a href="/">Chat</a>
-			<a href="/config">Config</a>
-			<a href="/content">Content</a>
-			<a href="/setup">API Keys</a>
+			<a href="/setup">Setup</a>
 			<a href="{{ url_for('logout') }}">Logout</a>
 		</div>
 	</div>
 
 	<div class="container">
-		<h2>Enter Your API Keys</h2>
+		<h2>Setup Your Session</h2>
+
+		<!-- API Key Section -->
+		<h3>Enter Your API Key</h3>
+
 		<label for="modelSelect">Select Model:</label>
 		<select id="modelSelect" onchange="loadExistingKey()">
 			<option value="gemini">Gemini</option>
 			<option value="openai">OpenAI</option>
 			<option value="deepseek">DeepSeek</option>
 		</select>
+
 		<label for="apiKey">API Key:</label>
 		<input type="text" id="apiKey" placeholder="Enter API Key">
+		<button onclick="saveKeys()">Save API Key</button>
 
-		<button onclick="saveKeys()">Save and Continue</button>
+		<hr>
+
+		<!-- Content Section -->
+		<h3>Upload or Paste Content</h3>
+
+		<h4>Upload PowerPoint (.pptx)</h4>
+		<label for="pptxFile">Choose a PPTX file:</label>
+		<input type="file" id="pptxFile" accept=".pptx">
+		<button onclick="uploadPptx()">Upload PPTX</button>
+
+		<h4>Or Paste Text</h4>
+		<textarea id="pastedText" rows="10" cols="50" placeholder="Paste your text here..."></textarea>
+		<br>
+		<button onclick="saveText()">Submit Text</button>
+
+		<hr>
+
+		<!-- Config Section -->
+		<h3>Configure Chat Behavior</h3>
+
+		<label for="tone">Tone:</label>
+		<select id="tone">
+			<option value="formal">Formal</option>
+			<option value="casual">Casual</option>
+			<option value="friendly">Friendly</option>
+		</select>
+
+		<label for="difficulty">Difficulty:</label>
+		<select id="difficulty">
+			<option value="easy">Easy</option>
+			<option value="medium">Medium</option>
+			<option value="hard">Hard</option>
+		</select>
+
+		<label for="style">Style:</label>
+		<select id="style">
+			<option value="multiple-choice">Multiple Choice</option>
+			<option value="short-answer">Short Answer</option>
+			<option value="free-response">Free Response</option>
+		</select>
+
+		<button onclick="saveConfig()">Save Config</button>
+
 	</div>
 
 	<script>
+		// Load existing API Key if available
 		function loadExistingKey() {
 			const model = document.getElementById('modelSelect').value;
 			let existingKey = '';
@@ -48,6 +95,7 @@
 			document.getElementById('apiKey').value = existingKey;
 		}
 
+		// Save API Key
 		function saveKeys() {
 			const model = document.getElementById('modelSelect').value;
 			const key = document.getElementById('apiKey').value.trim();
@@ -57,7 +105,6 @@
 				return;
 			}
 
-			// Persist API key in the database
 			fetch('/api_key', {
 				method: 'POST',
 				headers: {'Content-Type': 'application/json'},
@@ -65,18 +112,63 @@
 			})
 			.then(response => {
 				if (!response.ok) throw new Error('Failed to save API key');
-				// Store locally for immediate use
 				sessionStorage.setItem(`${model}Key`, key);
 				sessionStorage.setItem('modelChoice', model);
-				window.location.href = '/';
+				alert('API key saved!');
 			})
 			.catch(error => {
 				console.error(error);
-				alert('Error saving API key to database.');
+				alert('Error saving API key.');
 			});
 		}
 
-		// Load the correct existing key on page load
+		// Upload PPTX
+		function uploadPptx() {
+			const fileInput = document.getElementById('pptxFile');
+			const file = fileInput.files[0];
+			if (!file) {
+				alert('Please select a file.');
+				return;
+			}
+
+			const formData = new FormData();
+			formData.append('file', file);
+
+			fetch('/extract_text', {
+				method: 'POST',
+				body: formData
+			})
+			.then(response => response.json())
+			.then(data => {
+				sessionStorage.setItem('content', JSON.stringify(data.slides));
+				alert('PPTX uploaded!');
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('Failed to upload PPTX.');
+			});
+		}
+
+		// Save Pasted Text
+		function saveText() {
+			const text = document.getElementById('pastedText').value.trim();
+			if (!text) {
+				alert('Please paste some text.');
+				return;
+			}
+			sessionStorage.setItem('content', text);
+			alert('Text saved!');
+		}
+
+		// Save Config
+		function saveConfig() {
+			sessionStorage.setItem('tone', document.getElementById('tone').value);
+			sessionStorage.setItem('difficulty', document.getElementById('difficulty').value);
+			sessionStorage.setItem('style', document.getElementById('style').value);
+			alert('Config saved!');
+		}
+
+		// Auto-load existing key when page loads
 		document.addEventListener('DOMContentLoaded', loadExistingKey);
 	</script>
 </body>

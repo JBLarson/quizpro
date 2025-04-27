@@ -33,8 +33,28 @@
 			const input = document.getElementById('userInput').value.trim();
 			if (!input) return;
 
-			// TODO: Send message to backend and update chatBox
-			console.log('Sending message:', input);
+			fetch('/answer_question', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ answer: input })
+			})
+			.then(response => response.json())
+			.then(data => {
+				// Update chatBox with the response
+				const chatBox = document.getElementById('chatBox');
+				chatBox.innerHTML += `<div>User: ${input}</div>`;
+				if (data.prompt) {
+					chatBox.innerHTML += `<div>Bot: ${data.prompt}</div>`;
+				} else if (data.done) {
+					chatBox.innerHTML += `<div>Bot: All questions answered!</div>`;
+				}
+				document.getElementById('userInput').value = ''; // Clear input
+			})
+			.catch(error => {
+				console.error('Error:', error);
+			});
 		}
 	</script>
 </body>

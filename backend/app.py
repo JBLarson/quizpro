@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
@@ -52,38 +52,64 @@ def index():
 @login_required
 def setup():
     if request.method == 'POST':
-        api_key = request.form.get('apiKey')
         pptx_file = request.files.get('pptxFile')
-        pasted_text = request.form.get('pastedText')
-        selected_model = request.form.get('modelSelect')  # Get the selected model
+        selected_model = request.form.get('modelSelect')
+        api_key = request.form.get('apiKey')
+        pasted_text = request.form.get('pastedText')  # Retrieve pasted text
 
-        # Debugging: Print the values to check if they are being captured correctly
+        # Debugging: Print the values received
         print(f"API Key: {api_key}, Model: {selected_model}, PPTX File: {pptx_file}, Pasted Text: {pasted_text}")
 
-        # Handle API Key
-        if api_key:
-            # Call save_api_key with the model and key
-            response = save_api_key(api_key, selected_model)  # Pass the model and key
+        if pptx_file and pptx_file.filename:  # Check if the file is present and has a filename
+            json_data = pptx_to_json(pptx_file)  # Convert PPTX to JSON
+            print(f"JSON Data: {json_data}")  # Debugging output
 
-        # Handle PPTX Upload
-        if pptx_file:
-            data = pptx_to_json(pptx_file)  # Process the PPTX file
-            # Handle the data as needed
+            # Prepare the prompt for the LLM
+            prompt = f"Generate 20 quiz questions based on the following content: {json_data}. " \
+                     f"Separate each question with <|Q|>."
 
-        # Handle Pasted Text
-        if pasted_text:
-            save_pasted_text(pasted_text)  # Implement your logic for pasted text
+            # Debugging: Print the prompt and API key
+            print(f"Prompt: {prompt}")
 
-        # Redirect or render a success message
-        return redirect(url_for('some_success_page'))  # Change to your desired redirect
+            # Send data to the LLM
+            questions = generate_questions(api_key, selected_model, prompt)
+
+            # Check if questions were generated
+            if questions:
+                print(f"Generated Questions: {questions}")
+                session['questions'] = questions.split('<|Q|>')
+                session['current_question_index'] = 0
+                print(f"Session Questions: {session['questions']}")
+                return redirect(url_for('chat'))  # Redirect to the chat page
+            else:
+                print("No questions were generated.")
+        else:
+            print("No PPTX file uploaded or file has no name.")
 
     return render_template('setup.html')
 
 # route for chat configuration
-@app.route('/config')
+@app.route('/config', methods=['GET', 'POST'])
 @login_required
 def config():
-    return render_template('setup.html')
+    if request.method == 'POST':
+        print("Form data received:")
+        print(request.form)  # Print all form data
+        print(request.files)  # Print all file data
+
+        # Access specific fields
+        api_key = request.form.get('apiKey')
+        pptx_file = request.files.get('pptxFile')
+        pasted_text = request.form.get('pastedText')
+        selected_model = request.form.get('modelSelect')
+
+        print(f"API Key: {api_key}, PPTX File: {pptx_file}, Pasted Text: {pasted_text}, Model: {selected_model}")
+
+        # Add your logic to handle the data
+
+        return redirect(url_for('setup'))  # Change to your desired redirect
+
+    return render_template('setup.html')  # Render the setup.html for GET requests
 
 # route for adding content
 @app.route('/content')
@@ -94,19 +120,17 @@ def content():
 # Add endpoint to save API keys per user
 @app.route('/api_key', methods=['POST'])
 @login_required
-def save_api_key():
-    data = request.get_json()
-    model = data.get('model')
-    key = data.get('key')
-    if not model or not key:
+def save_api_key(api_key, model):
+    # Logic to save the API key
+    if not model or not api_key:
         return jsonify({'error': 'Missing model or key'}), 400
     # Store one key per user+model
-    api_key = ApiKey.query.filter_by(user_id=current_user.id, model=model).first()
-    if api_key:
-        api_key.key = key
+    existing_key = ApiKey.query.filter_by(user_id=current_user.id, model=model).first()
+    if existing_key:
+        existing_key.key = api_key
     else:
-        api_key = ApiKey(user_id=current_user.id, model=model, key=key)
-        db.session.add(api_key)
+        new_key = ApiKey(user_id=current_user.id, model=model, key=api_key)
+        db.session.add(new_key)
     db.session.commit()
     return jsonify({'status': 'success'}), 201
 
@@ -226,6 +250,97 @@ def evaluate_quiz():
     followup_raw = getattr(response, 'text', response)
     items = followup_raw.split('<|Q|>')
     return jsonify({'followup_questions': items}), 200
+
+@app.route('/success')
+@login_required
+def success():
+    return render_template('success.html')  # Create a success.html template
+
+def save_pasted_text(pasted_text):
+    # Implement your logic to save the pasted text
+    # For example, you could save it to the database or process it as needed
+    print(f"Saving pasted text: {pasted_text}")
+    # You can add your database logic here if needed
+
+def generate_questions(api_key, model, prompt):
+    # Implement the logic to send the prompt to the LLM and get the response
+    response = call_llm_api(api_key, model, prompt)  # Ensure this function is defined
+    print(f"LLM Response: {response}")  # Debugging output
+    return response  # Return the raw response from the LLM
+
+@app.route('/chat', methods=['GET', 'POST'])
+@login_required
+def chat():
+    current_index = session.get('current_question_index', 0)
+    questions = session.get('questions', [])
+
+    if request.method == 'POST':
+        user_answer = request.form.get('userAnswer')
+        # Store the user's answer in the database associated with the question
+        store_user_answer(current_index, user_answer)  # Implement this function
+
+        # Move to the next question
+        current_index += 1
+        session['current_question_index'] = current_index
+
+        if current_index < len(questions):
+            return redirect(url_for('chat'))  # Redirect to show the next question
+        else:
+            # All questions answered, evaluate answers
+            evaluate_answers(session['user_id'], questions)  # Implement this function
+            return redirect(url_for('results'))  # Redirect to results page
+
+    # Display the current question
+    current_question = questions[current_index] if current_index < len(questions) else None
+    return render_template('chat.html', question=current_question)
+
+def store_user_answer(question_index, user_answer):
+    # Logic to store the user's answer in the database
+    # Associate the answer with the question based on the index
+    pass
+
+def evaluate_answers(user_id, questions):
+    # Logic to send the user's answers to the LLM for evaluation
+    user_answers = get_user_answers(user_id)  # Implement this function to retrieve answers
+    prompt = f"Evaluate the following answers: {user_answers}. " \
+             f"Determine which are correct or wrong and provide follow-up questions."
+    response = call_llm_api(api_key, model, prompt)  # Implement this function
+    return response  # Return the evaluation results
+
+def call_llm_api(api_key, model, prompt):
+    import requests
+
+    url = "https://api.gemini.com/v1/actual_endpoint"  # Replace with the actual endpoint
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": model,
+        "prompt": prompt
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code == 200:
+        return response.json().get('text', '')  # Adjust based on the actual response structure
+    else:
+        print(f"Error calling LLM API: {response.status_code}, {response.text}")
+        return ""
+
+@app.route('/test_upload', methods=['GET', 'POST'])
+def test_upload():
+    if request.method == 'POST':
+        file = request.files.get('file')
+        if file:
+            return f"File uploaded: {file.filename}"
+        else:
+            return "No file uploaded."
+    return '''
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit">
+    </form>
+    '''
 
 if __name__ == '__main__':
     app.run(debug=True) 

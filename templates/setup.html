@@ -19,7 +19,7 @@
 	<div class="container">
 		<h2>Setup Your Session</h2>
 
-		<form method="post" enctype="multipart/form-data">
+		<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
 			<!-- API Key Section -->
 			<h3>Enter Your API Key</h3>
 			<label for="apiKey">API Key:</label>
@@ -37,7 +37,7 @@
 			<!-- Upload PPTX Section -->
 			<h3>Upload PowerPoint (.pptx)</h3>
 			<label for="pptxFile">Choose a PPTX file:</label>
-			<input type="file" id="pptxFile" name="pptxFile" accept=".pptx">
+			<input type="file" id="pptxFile" name="pptxFile" accept=".pptx" required>
 
 			<!-- Paste Text Section -->
 			<h3>Or Paste Text</h3>

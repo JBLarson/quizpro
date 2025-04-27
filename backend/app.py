@@ -143,8 +143,18 @@ def setup():
         # If a PPTX was uploaded, extract slide text
         if pptx_file and pptx_file.filename:
             slides_data = pptx_to_json(pptx_file)
-            # Join each slide's text list into a paragraph
-            slide_texts = '\n\n'.join([' '.join(s.get('text', [])) for s in slides_data.get('slides', [])])
+            # Filter out title slide but include lines with dates (4-digit years) or substantive content
+            import re
+            filtered_slides = []
+            for slide in slides_data.get('slides', [])[1:]:  # skip the first slide (title)
+                lines = []
+                for line in slide.get('text', []):
+                    # include if substantive (>3 words) or contains a 4-digit year
+                    if len(line.split()) > 3 or re.search(r'\b\d{4}\b', line):
+                        lines.append(line)
+                if lines:
+                    filtered_slides.append(' '.join(lines))
+            slide_texts = '\n\n'.join(filtered_slides)
             content_parts.append(slide_texts)
         # If the user pasted text, include it
         if pasted_text:
@@ -157,6 +167,8 @@ def setup():
         # Prepare the prompt for multiple-choice quiz questions with answers
         prompt = (
             f"Generate 20 multiple-choice quiz questions based solely on the following content: {content_str}. "
+            "Only generate questions on substantive topics and concepts; ignore slide metadata such as presenter names and slide header dates. "
+            "However, if a date is part of the substantive content (e.g., date of an event), you may create questions about it. "
             "For each question, provide four options labeled A, B, C, D. "
             "After listing the options, include 'Answer: X' where X is the correct letter. "
             "Separate each question with <|Q|>."

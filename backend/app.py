@@ -48,9 +48,14 @@ def index():
     return render_template('index.html')
 
 # route for api key setup
-@app.route('/setup')
+@app.route('/setup', methods=['GET', 'POST'])
 @login_required
 def setup():
+    if request.method == 'POST':
+        # Handle the combined input here
+        # You can process the API key, uploaded PPTX, and configuration settings
+        pass  # Implement your logic here
+
     return render_template('setup.html')
 
 # route for chat configuration

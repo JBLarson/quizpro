@@ -11,3 +11,16 @@ def promptGemini(client, prompt_text):
     )
     return getattr(response, 'text', response)
 
+# prompt for requesting multiple choice questions
+def requestMC(contentInput):
+    standardPrompt = f"""I need you to act as if you are a professional tutor. Analyze the following input content.
+    You're going to provide me with 30 multiple choice questions, BASED SOLELY on the provided input content.
+    The format of each question should look like this
+    1.  Which of the following factors does NOT heavily influence human perception, according to the presentation?
+        *   (A) Past experience
+        *   (B) Current context
+        *   (C) Future goals
+        *   (D) Innate preferences
+        *   **(D)**
+    The **()** denotes the correct answer. Questions MUST follow this template.
+    """

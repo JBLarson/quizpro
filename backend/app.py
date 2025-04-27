@@ -21,14 +21,6 @@ _root = _os.path.dirname(_os.path.dirname(__file__))
 load_dotenv(_os.path.join(_root, '.env'))
 print(f"[DEBUG] Database URI: {os.getenv('DATABASE_URL')}")
 
-# Legacy Gemini integration fallback
-try:
-    from .gemini import client, promptGemini
-except ImportError:
-    client = None
-    def promptGemini(c, p):
-        raise RuntimeError("Gemini integration unavailable")
-
 # Create Flask app
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
 # Make Python's built-in zip() available in Jinja templates
@@ -121,7 +113,8 @@ def save_api_key():
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html')
+    # Redirect root to setup since index.html is removed
+    return redirect(url_for('setup'))
 
 
 @app.route('/setup', methods=['GET', 'POST'])
@@ -241,78 +234,6 @@ def upload_pptx():
     data   = pptx_to_json(file)
     slides = data.get('slides', [])
     return jsonify({'slides': slides}), 200
-
-
-# ----- Legacy / Optional Endpoints -----
-@app.route('/generate_quiz', methods=['POST'])
-@login_required
-def generate_quiz():
-    payload    = request.get_json() or {}
-    slides     = payload.get('slides', [])
-    count      = payload.get('count', len(slides))
-    slide_text = '\n'.join(slides)
-    prompt     = (
-        f"Generate {count} quiz questions from the following slide texts. "
-        "Separate each with <|Q|>:\n" + slide_text
-    )
-    # using legacy promptGemini
-    response   = promptGemini(client, prompt)
-    raw        = getattr(response, 'text', response)
-    items      = raw.split('<|Q|>')
-    session_db = QuizSession(user_id=current_user.id)
-    db.session.add(session_db)
-    db.session.commit()
-    for idx, itm in enumerate(items):
-        text = itm.strip()
-        if text:
-            q = QuizQuestion(session_id=session_db.id, index=idx, prompt=text)
-            db.session.add(q)
-    db.session.commit()
-    first = QuizQuestion.query.filter_by(session_id=session_db.id, index=0).first()
-    return jsonify({'session_id': session_db.id,
-                    'question_id': first.id,
-                    'prompt': first.prompt}), 201
-
-
-@app.route('/answer_question', methods=['POST'])
-@login_required
-def answer_question():
-    payload     = request.get_json() or {}
-    session_id  = payload.get('session_id')
-    question_id = payload.get('question_id')
-    answer      = payload.get('answer')
-    question    = QuizQuestion.query.get_or_404(question_id)
-    question.user_answer = answer
-    db.session.commit()
-    next_q = QuizQuestion.query.filter(
-        QuizQuestion.session_id == session_id,
-        QuizQuestion.index > question.index
-    ).order_by(QuizQuestion.index).first()
-    if next_q:
-        return jsonify({'question_id': next_q.id, 'prompt': next_q.prompt}), 200
-    return jsonify({'done': True}), 200
-
-
-@app.route('/evaluate_quiz', methods=['POST'])
-@login_required
-def evaluate_quiz():
-    payload    = request.get_json() or {}
-    session_db = QuizSession.query.get_or_404(payload.get('session_id'))
-    qas        = [{'prompt': q.prompt, 'answer': q.user_answer} for q in session_db.questions]
-    eval_prompt = (
-        f"Here are the questions and your answers: {json.dumps(qas)}. "
-        "Determine which are correct or wrong, then generate follow-up questions "
-        "to close learning gaps, separate each with <|Q|>."
-    )
-    resp  = promptGemini(client, eval_prompt)
-    items = getattr(resp, 'text', resp).split('<|Q|>')
-    return jsonify({'followup_questions': items}), 200
-
-
-@app.route('/success')
-@login_required
-def success():
-    return render_template('success.html')
 
 
 # ----- Helper Functions -----

@@ -11,7 +11,7 @@ from .extensions import db, migrate, login_manager
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_login import login_user, logout_user, current_user, login_required
-from .models import Presentation, Slide, Question, ApiKey
+from .models import ApiKey
 
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
 # Set a secret key for Flask session management
@@ -36,49 +36,6 @@ def load_user(user_id):
 @login_required
 def index():
     return render_template('index.html')
-
-@app.route('/extract_text', methods=['POST'])
-def extract_text():
-    # Handle PPTX file upload and extract text from slides
-    pptx_file = request.files.get('file')
-    # TODO: Replace with actual PPTX extraction logic
-    slides_texts = ['Sample slide 1', 'Sample slide 2']
-    # Create a new Presentation record
-    pres = Presentation(title=pptx_file.filename if pptx_file else 'Untitled')
-    db.session.add(pres)
-    db.session.commit()
-    slides_response = []
-    for idx, content in enumerate(slides_texts):
-        slide = Slide(presentation_id=pres.id, index=idx, content=content)
-        db.session.add(slide)
-        slides_response.append({'id': slide.id, 'index': slide.index, 'content': slide.content})
-    db.session.commit()
-    return jsonify({'presentation_id': pres.id, 'slides': slides_response})
-
-@app.route('/quiz', methods=['POST'])
-def quiz():
-    data = request.get_json()
-    slide_id = data.get('slide_id')
-    slide = Slide.query.get_or_404(slide_id)
-    # TODO: Replace with actual quiz generation logic based on slide.content
-    prompt = f'Quiz question for slide {slide_id}'
-    question = Question(slide_id=slide.id, prompt=prompt)
-    db.session.add(question)
-    db.session.commit()
-    return jsonify({'question_id': question.id, 'prompt': question.prompt})
-
-@app.route('/evaluate', methods=['POST'])
-def evaluate():
-    data = request.get_json()
-    question_id = data.get('question_id')
-    answer = data.get('answer')
-    question = Question.query.get_or_404(question_id)
-    # TODO: Replace with actual evaluation logic
-    question.answer = answer
-    db.session.commit()
-    result = 'correct'
-    explanation = 'Sample explanation.'
-    return jsonify({'result': result, 'explanation': explanation})
 
 # route for api key setup
 @app.route('/setup')
@@ -158,9 +115,7 @@ def logout():
     return redirect(url_for('login'))
 
 admin = Admin(app, name="QuizPro Admin", template_mode="bootstrap4")
-admin.add_view(ModelView(Presentation, db.session))
-admin.add_view(ModelView(Slide,      db.session))
-admin.add_view(ModelView(Question,   db.session))
+admin.add_view(ModelView(ApiKey, db.session))
 
 if __name__ == '__main__':
     app.run(debug=True) 

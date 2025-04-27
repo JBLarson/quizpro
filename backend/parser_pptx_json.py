@@ -1,7 +1,5 @@
 import zipfile
 import xml.etree.ElementTree as ET
-import json
-import os
 
 def pptx_to_json(pptx_file):
     pptx_json = {

@@ -22,6 +22,7 @@ except ImportError:
     def promptGemini(c, p):
         raise RuntimeError("Gemini integration unavailable")
 import json
+import datetime
 
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
 # Set a secret key for Flask session management
@@ -134,12 +135,6 @@ def save_api_key(api_key, model):
     db.session.commit()
     return jsonify({'status': 'success'}), 201
 
-@app.route('/pptx', methods=['POST'])
-def pptxRetrieval():
-    data = request.json.get('data')
-    session['stored_data'] = data
-    return jsonify({'status': 'success'}), 201
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -189,8 +184,23 @@ def upload_pptx():
     file = request.files.get('file')
     if not file:
         return jsonify({'error': 'No file provided'}), 400
+
+    # Parse PPTX to JSON
     data = pptx_to_json(file)
     slides = data.get('slides', [])
+
+    # Create a directory for JSON files if it doesn't exist
+    json_dir = os.path.join(os.path.dirname(__file__), 'json_files')
+    os.makedirs(json_dir, exist_ok=True)
+
+    # Generate a unique filename based on timestamp and user
+    filename = "powerpoint.json"
+    file_path = os.path.join(json_dir, filename)
+    
+    # Save the JSON data to a file
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump({'slides': slides}, f, indent=4, ensure_ascii=False)
+
     return jsonify({'slides': slides}), 200
 
 @app.route('/generate_quiz', methods=['POST'])

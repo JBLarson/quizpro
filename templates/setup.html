@@ -38,6 +38,7 @@
 			<h3>Upload PowerPoint (.pptx)</h3>
 			<label for="pptxFile">Choose a PPTX file:</label>
 			<input type="file" id="pptxFile" name="pptxFile" accept=".pptx" required>
+			<button onclick="uploadPptx()">Upload</button>
 
 			<!-- Paste Text Section -->
 			<h3>Or Paste Text</h3>
@@ -134,7 +135,7 @@
 			const formData = new FormData();
 			formData.append('file', file);
 
-			fetch('/pptx', {
+			fetch('/upload_pptx', {
 				method: 'POST',
 				body: formData
 			})

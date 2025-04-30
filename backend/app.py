@@ -1,64 +1,89 @@
 # backend/app.py
 
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session
-from flask_cors import CORS
-import os, json
-from dotenv import load_dotenv
-from .questions import *
-import os as _os
-from .extensions import db, migrate, login_manager
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
-from flask_login import login_user, logout_user, current_user, login_required
-from .models import User, ApiKey, QuizSession, QuizQuestion
-from .parser_pptx_json import pptx_to_json
+# Main application file for QuizPro
+# --------------------------------
+# - Loads configuration and environment variables
+# - Initializes Flask app, database, migrations, login, and CORS
+# - Defines routes for user authentication, quiz setup, chat flow, and results
 
-# Real Gemini SDK
-import google.generativeai as genai
+# --------------------------------
+# Imports & SDK Configuration
+# --------------------------------
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session  # Core Flask components
+from flask_cors import CORS  # Enable cross-origin requests for frontend static files
+import os, json  # os for file paths/env, json for data serialization
+from dotenv import load_dotenv  # Load .env file into environment
+from questions import *  # Quiz content helpers (extract text, parse JSON)
+import os as _os  # Alternative os namespace for path operations
+from extensions import db, migrate, login_manager  # Initialize DB, migrations, and login manager
+from flask_admin import Admin  # Admin UI for managing models
+from flask_admin.contrib.sqla import ModelView  # SQLAlchemy views for admin
+from flask_login import login_user, logout_user, current_user, login_required  # User session management
+from models import User, ApiKey, QuizSession, QuizQuestion  # ORM models
+from parser_pptx_json import pptx_to_json  # PPTX parsing utility
+import google.generativeai as genai  # Google Gemini SDK for AI generation
 
-# Load environment variables
+# --------------------------------
+# Environment & App Initialization
+# --------------------------------
+# Determine project root and load .env variables (SECRET_KEY, DATABASE_URL, GEMINI_API_KEY)
 _root = _os.path.dirname(_os.path.dirname(__file__))
 load_dotenv(_os.path.join(_root, '.env'))
 print(f"[DEBUG] Database URI: {os.getenv('DATABASE_URL')}")
 
-# Create Flask app
+# Create Flask app, pointing to static files and Jinja2 templates
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
-# Make Python's built-in zip() available in Jinja templates
+# Make Python's built-in zip() available in templates (e.g., pairing arrays)
 app.jinja_env.globals.update(zip=zip)
 
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///quizpro.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Configure secret key and database
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')  # Session and CSRF protection
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///quizpro.db')  # Connection string
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable event notifications to conserve resources
 
-CORS(app)
-db.init_app(app)
-migrate.init_app(app, db)
+# Initialize extensions with the app context
+CORS(app)            # Allow frontend JS to call these endpoints
+db.init_app(app)     # Bind SQLAlchemy
+migrate.init_app(app, db)  # Bind Alembic migrations
+login_manager.init_app(app)  # Set up Flask-Login
+login_manager.login_view = 'login'  # Redirect unauthorized to login page
 
-login_manager.init_app(app)
-login_manager.login_view = 'login'  # redirect unauthorized users here
-
-# Flask-Login user loader
+# --------------------------------
+# Flask-Login User Loader
+# --------------------------------
 @login_manager.user_loader
+# Given a user_id, load the corresponding User from the database
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
-# ----- Helper to fetch the stored API key -----
+# --------------------------------
+# Helper: Retrieve Stored API Key
+# --------------------------------
 def get_user_api_key(model_name="gemini"):
-    """Retrieve the current_user's API key for the given model."""
+    """
+    Fetch the current_user's API key for the specified LLM model.
+    Flashes an error and returns None if not found.
+    """
     record = ApiKey.query.filter_by(user_id=current_user.id, model=model_name).first()
     if not record:
         flash(f"No API key saved for '{model_name}'. Please add one under Setup.", "error")
         return None
     return record.key
 
-
-# ----- Authentication Routes -----
+# --------------------------------
+# Authentication Routes
+# --------------------------------
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    User registration:
+    GET  -> render registration form
+    POST -> validate input, create new User, log them in, redirect to setup
+    """
     if request.method == 'POST':
         email    = request.form['email']
         password = request.form['password']
+        # Prevent duplicate registrations
         if User.query.filter_by(email=email).first():
             flash('Email already registered', 'error')
             return render_template('register.html')
@@ -70,9 +95,13 @@ def register():
         return redirect(url_for('setup'))
     return render_template('register.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    User login:
+    GET  -> render login form
+    POST -> verify credentials, log in user, redirect to setup
+    """
     if request.method == 'POST':
         email    = request.form['email']
         password = request.form['password']
@@ -84,24 +113,30 @@ def login():
         return redirect(url_for('setup'))
     return render_template('login.html')
 
-
 @app.route('/logout')
 @login_required
 def logout():
+    """Log out the current user and redirect to login page."""
     logout_user()
     return redirect(url_for('login'))
 
-
-# ----- Main Quiz Flow -----
+# --------------------------------
+# API Key Save Endpoint
+# --------------------------------
 @app.route('/api_key', methods=['POST'])
 @login_required
 def save_api_key():
+    """
+    Save or update the current user's AI service API key.
+    Expects JSON payload: { model: 'gemini', key: 'XYZ' }
+    Returns JSON status.
+    """
     data = request.get_json() or {}
     model = data.get('model') or 'gemini'
     key = data.get('key')
     if not key:
         return jsonify(error="Missing API key"), 400
-    # Upsert API key record for the user and model
+    # Upsert pattern: update if exists, else create
     record = ApiKey.query.filter_by(user_id=current_user.id, model=model).first()
     if record:
         record.key = key
@@ -110,16 +145,26 @@ def save_api_key():
     db.session.commit()
     return jsonify(status="ok", model=model, key=key), 200
 
+# --------------------------------
+# Root Redirect
+# --------------------------------
 @app.route('/')
 @login_required
 def index():
-    # Redirect root to setup since index.html is removed
+    """Redirect authenticated users to the quiz setup page."""
     return redirect(url_for('setup'))
 
-
+# --------------------------------
+# Quiz Setup Route
+# --------------------------------
 @app.route('/setup', methods=['GET', 'POST'])
 @login_required
 def setup():
+    """
+    Display or process the quiz setup form:
+    - GET  -> render setup template with existing API key
+    - POST -> handle PPTX upload or pasted text, build prompt, generate questions via LLM
+    """
     # Fetch stored Gemini API key for current user
     gemini_record = ApiKey.query.filter_by(user_id=current_user.id, model='gemini').first()
     keys = {'gemini': gemini_record.key if gemini_record else ''}
@@ -212,9 +257,16 @@ def setup():
     return render_template('setup.html', keys=keys)
 
 
+# --------------------------------
+# Chat Route: display and process quiz questions
+# --------------------------------
 @app.route('/chat', methods=['GET', 'POST'])
 @login_required
 def chat():
+    """
+    GET  -> render the next quiz question with options
+    POST -> record the user's answer, advance index, redirect to next question or results
+    """
     qs  = session.get('questions', [])
     idx = session.get('current_question_index', 0)
     # Skip any non-MCQ entries (e.g., free-response placeholder) at the start
@@ -242,9 +294,16 @@ def chat():
                            total=total_questions)
 
 
+# --------------------------------
+# Results Route: show quiz summary and detailed feedback
+# --------------------------------
 @app.route('/results')
 @login_required
 def results():
+    """
+    Display overall performance, list each question with user and correct answers,
+    and provide actions to retry incorrect or start a new quiz.
+    """
     qs = session.get('questions', [])
     ans = session.get('answers', [])
     # Count incorrect answers
@@ -263,10 +322,16 @@ def results():
                            percent_wrong=percent_wrong)
 
 
-# Route to retry only the questions the user got wrong
+# --------------------------------
+# Retry Incorrect Route: retake only missed questions
+# --------------------------------
 @app.route('/retry_incorrect', methods=['POST'])
 @login_required
 def retry_incorrect():
+    """
+    Filter stored questions to those answered incorrectly, reset session tracking,
+    and redirect to chat for retrying these questions.
+    """
     qs = session.get('questions', [])
     ans = session.get('answers', [])
     # Filter to only questions where user's answer != correct
@@ -282,10 +347,16 @@ def retry_incorrect():
     return redirect(url_for('chat'))
 
 
-# ----- PPTX Upload Endpoint -----
+# --------------------------------
+# PPTX Upload API: parse slides and return JSON
+# --------------------------------
 @app.route('/upload_pptx', methods=['POST'])
 @login_required
 def upload_pptx():
+    """
+    Accept a PowerPoint file upload, parse it into JSON slide data,
+    and return the slide texts in a JSON response.
+    """
     file = request.files.get('file')
     if not file:
         return jsonify({'error': 'No file provided'}), 400
@@ -294,9 +365,14 @@ def upload_pptx():
     return jsonify({'slides': slides}), 200
 
 
-# ----- Helper Functions -----
+# --------------------------------
+# Helper: generate_questions via AI model
+# --------------------------------
 def generate_questions(api_key, model_name, prompt):
-    """Configure per-call and generate via Gemini."""
+    """
+    Configure the AI SDK with the provided key and model,
+    send the prompt text to the model, and return its generated response.
+    """
     if not api_key:
         return ""
     genai.configure(api_key=api_key)
@@ -305,10 +381,16 @@ def generate_questions(api_key, model_name, prompt):
     return getattr(response, "text", response)
 
 
+# --------------------------------
+# Adaptive Follow-up Route: generate new questions on incorrect topics
+# --------------------------------
 @app.route('/adaptive_followup', methods=['POST'])
 @login_required
 def adaptive_followup():
-    """Generate follow-up MCQs on topics you got wrong."""
+    """
+    Build a follow-up prompt for questions answered incorrectly,
+    generate new MCQs, reset session, and redirect to chat for review.
+    """
     # Fetch stored API key
     api_key = get_user_api_key()
     if not api_key:
@@ -369,5 +451,9 @@ def adaptive_followup():
     return redirect(url_for('chat'))
 
 
+# --------------------------------
+# Application entry point
+# --------------------------------
 if __name__ == '__main__':
+    # Start Flask in debug mode for development (auto-reload, detailed errors)
     app.run(debug=True)

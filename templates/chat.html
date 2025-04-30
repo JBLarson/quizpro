@@ -1,6 +1,8 @@
+<!-- Template: QuizPro chat page - displays one question at a time with progress bar and theme toggle -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Meta tags and dynamic title showing current question number and total questions -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuizPro — Question {{ index }} of {{ total }}</title>
@@ -8,6 +10,7 @@
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon/favicon.ico') }}">
 </head>
 <body>
+  <!-- Menu bar: includes dark/light mode toggle and logout link -->
   <div class="menu-bar-wrapper">
     <div class="menu-bar">
       <button id="themeToggle" type="button">🌓</button>
@@ -15,16 +18,20 @@
     </div>
   </div>
 
+  <!-- Main container for the question card -->
   <div class="container">
     <div class="card">
       <div class="card-body">
+        <!-- Header showing question progress -->
         <h2 class="header">Question {{ index }} of {{ total }}</h2>
+        <!-- Question prompt text -->
         <p class="question-text">{{ question.prompt }}</p>
       </div>
-      <!-- Progress Bar -->
+      <!-- Progress Bar showing completion percentage -->
       <div class="progress-container">
         <div class="progress-bar" id="progressBar" data-index="{{ index }}" data-total="{{ total }}"></div>
       </div>
+      <!-- Answer form: radio options and Next button -->
       <form method="POST">
         {% for letter, text in question.options.items() %}
           <div class="form-group option">
@@ -38,6 +45,7 @@
   </div> <!-- end container -->
 
   <script>
+    /* JavaScript: manage theme toggle button */
     (function() {
       const toggle = document.getElementById('themeToggle');
       const root = document.documentElement;
@@ -50,6 +58,7 @@
       });
     })();
 
+    /* JavaScript: dynamically set progress bar width based on question index */
     document.addEventListener('DOMContentLoaded', function() {
       const bar = document.getElementById('progressBar');
       const idx = parseInt(bar.getAttribute('data-index'), 10);

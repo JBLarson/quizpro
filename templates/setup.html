@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Template: QuizPro setup page. Provides API key input, AI model selection, PPTX upload, and text-paste functionality. -->
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
 </head>
 <body>
 	<div class="menu-bar-wrapper">
+		<!-- Menu bar: includes theme toggle (dark/light mode) and logout link -->
 		<!-- Theme toggle outside of menu-bar for proper spacing -->
 		<button id="themeToggle" class="theme-toggle" type="button" title="Toggle light/dark mode">🌓</button>
 		<div class="menu-bar">
@@ -17,12 +19,15 @@
 	</div>
 
 	<div class="container">
+		<!-- Main container for the setup card and form -->
 		<div class="card">
 			<h2 class="header">Setup Your Session</h2>
 
 			<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
+				<!-- Setup Form: submits API key, chosen model, PPTX file, and pasted text to backend -->
 				<!-- API Key Section -->
 				<div class="form-group">
+					<!-- API Key Input: enter or update the user's AI service key (Gemini) -->
 					<label for="apiKey">API Key:</label>
 					<div class="input-with-button">
 						<input class="form-control" type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required value="{{ keys.get('gemini', '') }}">
@@ -32,6 +37,7 @@
 
 				<!-- LLM Model Selection -->
 				<h3>Select LLM Model</h3>
+				<!-- AI Model Selection: dropdown to pick which language model to use for question generation -->
 				<label for="modelSelect">Model:</label>
 				<select id="modelSelect" name="modelSelect" required>
 					<option value="gemini">Gemini</option>
@@ -39,16 +45,19 @@
 
 				<!-- Upload PPTX Section -->
 				<div class="form-group">
+					<!-- PPTX File Upload: select and upload a PowerPoint file to extract slide text -->
 					<label for="pptxFile">Choose PPTX:</label>
 					<input class="form-control" type="file" id="pptxFile" name="pptxFile">
 					<button type="button" id="uploadBtn" class="btn">Upload</button>
 				</div>
 				
 				<div class="form-group">
+					<!-- Textarea: allows pasting or editing of extracted slide text -->
 					<textarea class="form-control" name="pastedText" id="pastedText" rows="10" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
 				</div>
 				
 				<script>
+				<!-- JavaScript: handles PPTX upload via fetch to '/upload_pptx' and updates the textarea with extracted text -->
 				document.getElementById('uploadBtn').addEventListener('click', function() {
 					const fileInput = document.getElementById('pptxFile');
 					const file = fileInput.files[0];
@@ -82,6 +91,7 @@
 				</script>
 				
 				<button type="submit" class="btn">Submit All</button>
+				<!-- Submit Button: finalize configuration and generate quiz questions -->
 			</form>
 		</div>  <!-- end card -->
 	</div>  <!-- end container -->

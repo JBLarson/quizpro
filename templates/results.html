@@ -1,21 +1,26 @@
+<!-- Template: QuizPro results page - summarizes performance and provides next actions -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Meta tags and title -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuizPro — Results</title>
+  <!-- Stylesheet and favicon -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon/favicon.ico') }}">
 </head>
 <body>
   <div class="container">
+    <!-- Summary Header: overall score and percentage -->
     <h2>All Done!</h2>
     <p>You answered {{ total_answered }} questions and got {{ total_answered - wrong_count }} correct ({{ 100 - percent_wrong }}%).</p>
+    <!-- Detailed list of each question, user answer, and correct answer -->
     <ul>
       {% for q, a in zip(questions, answers) %}
         <li>
           <strong>{{ q.prompt }}</strong><br>
-          <!-- Display options -->
+          <!-- Options list highlighting user choice and correct answer -->
           <ul class="options-list">
             {% for letter, text in q.options.items() %}
               <li{% if letter == a %} class="user-choice"{% endif %}{% if letter == q.answer %} class="correct-choice"{% endif %}>
@@ -23,8 +28,11 @@
               </li>
             {% endfor %}
           </ul>
+          <!-- User's selected answer -->
           <div>Your answer: <strong>{{ a }}) {{ q.options[a] if q.options[a] else '' }}</strong></div>
+          <!-- Correct answer -->
           <div>Correct answer: <strong>{{ q.answer }}) {{ q.options[q.answer] }}</strong></div>
+          <!-- Feedback message -->
           {% if a == q.answer %}
             <div class="result correct">Correct!</div>
           {% else %}
@@ -33,6 +41,7 @@
         </li>
       {% endfor %}
     </ul>
+    <!-- Action buttons: retry incorrect, similar topic quiz, or new quiz -->
     <div class="results-actions">
       {% if incorrect %}
         <form action="{{ url_for('retry_incorrect') }}" method="post" style="display:inline">
@@ -46,6 +55,7 @@
         <button type="submit">Run Another Quiz</button>
       </form>
     </div>
+    <!-- Theme toggle menu bar at the bottom for consistent UX -->
     <div class="menu-bar-wrapper">
       <div class="menu-bar">
         <button id="themeToggle" type="button">🌓</button>
@@ -53,6 +63,7 @@
     </div>
   </div>
   <script>
+    /* JavaScript: manage theme toggle button */
     (function() {
       const toggle = document.getElementById('themeToggle');
       const root = document.documentElement;

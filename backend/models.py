@@ -1,8 +1,23 @@
+# backend/models.py
+# Defines the database models for QuizPro using SQLAlchemy ORM and Flask-Login.
+
 from datetime import datetime
-from .extensions import db
+from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
+# ------------------------------------------------------------------------------
+# User Model
+# Represents a registered user; inherits from UserMixin to support Flask-Login.
+# Columns:
+# - id: unique primary key
+# - email: unique user email address
+# - password_hash: hashed password for authentication
+# - created_at: timestamp when the account was created
+# Relationships:
+# - api_keys: stored API keys for AI services
+# - sessions: quiz sessions initiated by the user
+# ------------------------------------------------------------------------------
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -14,12 +29,24 @@ class User(UserMixin, db.Model):
     sessions = db.relationship('QuizSession', backref='user', lazy=True)
 
     def set_password(self, password):
+        # Hashes and stores the user's plain-text password securely.
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        # Verifies a plain-text password against the stored hash.
         return check_password_hash(self.password_hash, password)
 
-# Restore the ApiKey model for storing API keys per user
+# ------------------------------------------------------------------------------
+# ApiKey Model
+# Associates a user with an external AI API key for a specific model.
+# Columns:
+# - id: unique primary key
+# - user_id: links to User.id via ForeignKey
+# - model: name of the AI model (e.g., 'gemini')
+# - key: the actual API key string
+# - created_at: timestamp when the key was added
+# Unique constraint ensures one key per user-model pair.
+# ------------------------------------------------------------------------------
 class ApiKey(db.Model):
     __tablename__ = 'api_key'
     id = db.Column(db.Integer, primary_key=True)
@@ -29,7 +56,16 @@ class ApiKey(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     __table_args__ = (db.UniqueConstraint('user_id', 'model', name='uq_user_model'),)
 
-# Add QuizSession and QuizQuestion models
+# ------------------------------------------------------------------------------
+# QuizSession Model
+# Groups multiple QuizQuestion entries as part of one quiz attempt.
+# Columns:
+# - id: unique primary key
+# - user_id: links to User.id to attribute the session
+# - created_at: timestamp when the quiz session started
+# Relationships:
+# - questions: list of QuizQuestion records in this session
+# ------------------------------------------------------------------------------
 class QuizSession(db.Model):
     __tablename__ = 'quiz_session'
     id = db.Column(db.Integer, primary_key=True)
@@ -37,6 +73,17 @@ class QuizSession(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     questions = db.relationship('QuizQuestion', backref='session', lazy=True)
 
+# ------------------------------------------------------------------------------
+# QuizQuestion Model
+# Stores each individual question prompt and user-provided answer.
+# Columns:
+# - id: unique primary key
+# - session_id: links to QuizSession.id to group questions
+# - index: numeric order of question within session
+# - prompt: text of the quiz question
+# - user_answer: the response submitted by the user
+# - created_at: timestamp when the question was generated/answered
+# ------------------------------------------------------------------------------
 class QuizQuestion(db.Model):
     __tablename__ = 'quiz_question'
     id = db.Column(db.Integer, primary_key=True)

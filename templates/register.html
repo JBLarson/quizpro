@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Template: User registration page for QuizPro -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,20 +8,25 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+  <!-- Main container for the registration form -->
   <div class="container">
     <div class="card">
+      <!-- Registration Form: collects user email and password -->
       <h2 class="header">Register</h2>
       <form method="post">
         <div class="form-group">
+          <!-- Email input field -->
           <label for="email">Email:</label>
           <input class="form-control" type="email" name="email" id="email" required>
         </div>
         <div class="form-group">
+          <!-- Password input field -->
           <label for="password">Password:</label>
           <input class="form-control" type="password" name="password" id="password" required>
         </div>
         <button type="submit" class="btn">Register</button>
       </form>
+      <!-- Link to login page for existing users -->
       <p class="mt-3">Already have an account? <a href="{{ url_for('login') }}">Login here</a>.</p>
     </div>
   </div>

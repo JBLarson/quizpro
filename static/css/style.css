@@ -47,6 +47,7 @@ body {
 
 /* Container: centered card with white background, rounded corners, and shadow */
 .container {
+  width: 90%;
   max-width: 600px;
   margin: 40px auto;
   background: #fff;
@@ -94,28 +95,37 @@ button:disabled {
   background: #fafbfc;
 }
 
-/* menu styling */
-
+/* Menu Bar Wrapper: full-width background bar */
 .menu-bar-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   position: fixed;
   top: 0;
   left: 0;
+  width: 100%;
   background: var(--menu-bg);
-  padding: 12px 0;
-  z-index: 1000;
   box-shadow: var(--menu-shadow);
+  z-index: 1000;
 }
 
+/* Inner menu-bar: center content, constrain width, add padding */
 .menu-bar {
-  max-width: 600px;
   width: 100%;
+  max-width: 600px;
+  flex-wrap: wrap;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 12px 24px;
   display: flex;
-  justify-content: flex-end;
-  gap: 32px;
+  align-items: center;
+}
+
+/* Space between adjacent items */
+.menu-bar > * + * {
+  margin-left: 32px;
+}
+
+/* Push logout link to the far right */
+.menu-bar .logout-link {
+  margin-left: auto;
 }
 
 .menu-bar a {
@@ -175,10 +185,9 @@ button.theme-toggle:hover {
 
 /* Layout and component utility classes */
 .card {
-  background: var(--container-bg);
-  border: 1px solid var(--input-border);
+  background: #fff;
   border-radius: 8px;
-  box-shadow: var(--container-shadow);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   padding: 24px;
   margin-bottom: 24px;
 }
@@ -260,5 +269,97 @@ button.theme-toggle:hover {
 }
 .option label {
   margin: 0;
+}
+
+/* Dark Mode Overrides */
+html.dark body {
+  background: #121212;
+  color: #e0e0e0;
+}
+html.dark .container {
+  background: #1e1e1e;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+html.dark input,
+html.dark select,
+html.dark textarea,
+html.dark button {
+  background: #2c2c2c;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+html.dark button {
+  background: #4f8cff; /* Accent remains blue */
+}
+html.dark button:disabled {
+  background: #555;
+}
+html.dark #chat {
+  background: #262626;
+  border: 1px solid #444;
+}
+html.dark a {
+  color: #4f8cff;
+}
+html.dark .card {
+  background: #1e1e1e;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark p,
+html.dark label {
+  color: #e0e0e0;
+}
+
+/* Anchor buttons styled to match <button> elements */
+.btn, a.btn {
+  display: inline-block;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: #4f8cff;
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+}
+
+.btn:hover, a.btn:hover {
+  background: #3a7adf;
+}
+
+/* Dark mode overrides for anchor buttons */
+html.dark .btn, html.dark a.btn {
+  background: #2c2c2c;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 480px) {
+  .container {
+    padding: 24px 16px;
+  }
+  .menu-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px 16px;
+  }
+  .menu-bar > * + * {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+  .menu-bar .logout-link {
+    margin-left: 0;
+  }
+  .input-with-button {
+    flex-direction: column;
+  }
+  .input-with-button .btn {
+    margin: 8px 0 0 0;
+  }
 }
 

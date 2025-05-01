@@ -13,8 +13,12 @@
   <!-- Menu bar: includes dark/light mode toggle and logout link -->
   <div class="menu-bar-wrapper">
     <div class="menu-bar">
+      <!-- Theme toggle button -->
       <button id="themeToggle" type="button">🌓</button>
-      <a href="{{ url_for('logout') }}">Logout</a>
+      <!-- Back to Setup button -->
+      <a href="{{ url_for('setup') }}" class="btn back-btn">Back to Setup</a>
+      <!-- Logout link pushed to the right via CSS -->
+      <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
     </div>
   </div>
 

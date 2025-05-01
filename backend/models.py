@@ -2,7 +2,7 @@
 # Defines the database models for QuizPro using SQLAlchemy ORM and Flask-Login.
 
 from datetime import datetime
-from extensions import db
+from .extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 

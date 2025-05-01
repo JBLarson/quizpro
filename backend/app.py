@@ -13,14 +13,14 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, f
 from flask_cors import CORS  # Enable cross-origin requests for frontend static files
 import os, json  # os for file paths/env, json for data serialization
 from dotenv import load_dotenv  # Load .env file into environment
-from questions import *  # Quiz content helpers (extract text, parse JSON)
-import os as _os  # Alternative os namespace for path operations
-from extensions import db, migrate, login_manager  # Initialize DB, migrations, and login manager
+from .questions import *  # Quiz content helpers (extract text, parse JSON)
+import os as _os  # alias to avoid collision with main os import
+from .extensions import db, migrate, login_manager  # Initialize DB, migrations, and login manager
 from flask_admin import Admin  # Admin UI for managing models
 from flask_admin.contrib.sqla import ModelView  # SQLAlchemy views for admin
 from flask_login import login_user, logout_user, current_user, login_required  # User session management
-from models import User, ApiKey, QuizSession, QuizQuestion  # ORM models
-from parser_pptx_json import pptx_to_json  # PPTX parsing utility
+from .models import User, ApiKey, QuizSession, QuizQuestion  # ORM models
+from .parser_pptx_json import pptx_to_json  # PPTX parsing utility
 import google.generativeai as genai  # Google Gemini SDK for AI generation
 
 # --------------------------------
@@ -47,6 +47,14 @@ db.init_app(app)     # Bind SQLAlchemy
 migrate.init_app(app, db)  # Bind Alembic migrations
 login_manager.init_app(app)  # Set up Flask-Login
 login_manager.login_view = 'login'  # Redirect unauthorized to login page
+
+# --------------------------------
+# Ensure database tables exist before handling any request (development/demo)
+# --------------------------------
+@app.before_request
+def initialize_database():
+    # Create all tables defined by SQLAlchemy models (idempotent)
+    db.create_all()
 
 # --------------------------------
 # Flask-Login User Loader
@@ -455,5 +463,5 @@ def adaptive_followup():
 # Application entry point
 # --------------------------------
 if __name__ == '__main__':
-    # Start Flask in debug mode for development (auto-reload, detailed errors)
+    # Start Flask in debug mode
     app.run(debug=True)

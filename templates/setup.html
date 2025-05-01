@@ -11,10 +11,9 @@
 <body>
 	<div class="menu-bar-wrapper">
 		<!-- Menu bar: includes theme toggle (dark/light mode) and logout link -->
-		<!-- Theme toggle outside of menu-bar for proper spacing -->
-		<button id="themeToggle" class="theme-toggle" type="button" title="Toggle light/dark mode">🌓</button>
 		<div class="menu-bar">
-			<a href="{{ url_for('logout') }}">Logout</a>
+			<button id="themeToggle" class="theme-toggle" type="button" title="Toggle light/dark mode">🌓</button>
+			<a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
 		</div>
 	</div>
 
@@ -45,50 +44,15 @@
 
 				<!-- Upload PPTX Section -->
 				<div class="form-group">
-					<!-- PPTX File Upload: select and upload a PowerPoint file to extract slide text -->
+					<!-- PPTX File Input: the file will be processed on form submission -->
 					<label for="pptxFile">Choose PPTX:</label>
 					<input class="form-control" type="file" id="pptxFile" name="pptxFile">
-					<button type="button" id="uploadBtn" class="btn">Upload</button>
 				</div>
 				
 				<div class="form-group">
 					<!-- Textarea: allows pasting or editing of extracted slide text -->
 					<textarea class="form-control" name="pastedText" id="pastedText" rows="10" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
 				</div>
-				
-				<script>
-				<!-- JavaScript: handles PPTX upload via fetch to '/upload_pptx' and updates the textarea with extracted text -->
-				document.getElementById('uploadBtn').addEventListener('click', function() {
-					const fileInput = document.getElementById('pptxFile');
-					const file = fileInput.files[0];
-				
-					if (!file) {
-						alert('Please select a PPTX file.');
-						return;
-					}
-				
-					const formData = new FormData();
-					formData.append('file', file);
-				
-					fetch('/upload_pptx', {
-						method: 'POST',
-						body: formData
-					})
-					.then(response => {
-						if (!response.ok) throw new Error('Failed to upload PPTX');
-						return response.json();
-					})
-					.then(data => {
-						// Combine all slide text
-						const text = data.slides.map(slide => slide.text.join('\n')).join('\n\n---\n\n');
-						document.getElementById('pastedText').value = text;
-					})
-					.catch(error => {
-						console.error(error);
-						alert('Failed to upload PPTX.');
-					});
-				});
-				</script>
 				
 				<button type="submit" class="btn">Submit All</button>
 				<!-- Submit Button: finalize configuration and generate quiz questions -->

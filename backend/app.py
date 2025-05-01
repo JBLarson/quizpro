@@ -21,6 +21,9 @@ from flask_admin.contrib.sqla import ModelView  # SQLAlchemy views for admin
 from flask_login import login_user, logout_user, current_user, login_required  # User session management
 from .models import User, ApiKey, QuizSession, QuizQuestion  # ORM models
 from .parser_pptx_json import pptx_to_json  # PPTX parsing utility
+from .parser_pdf_text import pdf_to_text  # PDF parsing utility
+from .parser_docx_text import docx_to_text  # DOCX parsing utility
+from .parser_xlsx_text import xlsx_to_text  # XLSX parsing utility
 import google.generativeai as genai  # Google Gemini SDK for AI generation
 
 # --------------------------------
@@ -189,32 +192,42 @@ def setup():
                 db.session.add(gemini_record)
             db.session.commit()
             keys['gemini'] = api_key
-        # Retrieve content inputs and combine slide text with pasted text
-        pptx_file = request.files.get('pptxFile')
+        # Retrieve content inputs and combine uploaded file text or pasted text
+        content_file = request.files.get('contentFile')
         pasted_text = (request.form.get('pastedText') or '').strip()
         content_parts = []
-        # If a PPTX was uploaded, extract slide text
-        if pptx_file and pptx_file.filename:
-            slides_data = pptx_to_json(pptx_file)
-            # Filter out title slide but include lines with dates (4-digit years) or substantive content
-            import re
-            filtered_slides = []
-            for slide in slides_data.get('slides', [])[1:]:  # skip the first slide (title)
-                lines = []
-                for line in slide.get('text', []):
-                    # include if substantive (>3 words) or contains a 4-digit year
-                    if len(line.split()) > 3 or re.search(r'\b\d{4}\b', line):
-                        lines.append(line)
-                if lines:
-                    filtered_slides.append(' '.join(lines))
-            slide_texts = '\n\n'.join(filtered_slides)
-            content_parts.append(slide_texts)
+        # If a file was uploaded, detect type and extract text
+        if content_file and content_file.filename:
+            filename = content_file.filename.lower()
+            if filename.endswith('.pptx'):
+                slides_data = pptx_to_json(content_file)
+                import re
+                filtered_slides = []
+                for slide in slides_data.get('slides', [])[1:]:
+                    lines = [line for line in slide.get('text', []) if len(line.split()) > 3 or re.search(r"\b\d{4}\b", line)]
+                    if lines:
+                        filtered_slides.append(' '.join(lines))
+                content_parts.append('\n\n'.join(filtered_slides))
+            elif filename.endswith('.pdf'):
+                text = pdf_to_text(content_file)
+                content_parts.append(text)
+            elif filename.endswith('.docx'):
+                text = docx_to_text(content_file)
+                content_parts.append(text)
+            elif filename.endswith('.xlsx'):
+                text = xlsx_to_text(content_file)
+                content_parts.append(text)
+            else:
+                # Treat other uploads (e.g., .txt) as plain text
+                content_file.seek(0)
+                text = content_file.read().decode('utf-8', errors='ignore')
+                content_parts.append(text)
         # If the user pasted text, include it
         if pasted_text:
             content_parts.append(pasted_text)
         # Ensure there is some content
         if not content_parts:
-            flash("Please upload a PPTX and/or paste some text.", "error")
+            flash("Please upload a file or paste some text.", "error")
             return render_template('setup.html', keys=keys)
         content_str = '\n\n'.join(content_parts)
         # Prompt LLM: no intros, start immediately with questions
@@ -275,11 +288,18 @@ def chat():
     GET  -> render the next quiz question with options
     POST -> record the user's answer, advance index, redirect to next question or results
     """
-    qs  = session.get('questions', [])
+    qs = session.get('questions', [])
+    # If no questions or we've gone past the last one, redirect to results
+    if not qs:
+        flash('No questions available. Please set up a quiz.', 'info')
+        return redirect(url_for('setup'))
     idx = session.get('current_question_index', 0)
     # Skip any non-MCQ entries (e.g., free-response placeholder) at the start
     while idx < len(qs) and not qs[idx].get('options'):
         idx += 1
+    # If we've exhausted all questions, go to results page
+    if idx >= len(qs):
+        return redirect(url_for('results'))
     session['current_question_index'] = idx
 
     if request.method == 'POST':
@@ -450,6 +470,10 @@ def adaptive_followup():
         # Only include true MCQs with 4 options
         if correct and len(options) == 4:
             followups.append({'prompt': question_text, 'options': options, 'answer': correct})
+    # If no valid follow-up questions generated, show an error instead of empty quiz
+    if not followups:
+        flash('No follow-up questions generated. Please try again.', 'error')
+        return redirect(url_for('results'))
     # Restart session with follow-up questions
     session['questions'] = followups
     session['answers'] = []

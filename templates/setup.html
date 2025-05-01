@@ -44,10 +44,49 @@
 
 				<!-- Upload PPTX Section -->
 				<div class="form-group">
-					<!-- PPTX File Input: the file will be processed on form submission -->
-					<label for="pptxFile">Choose PPTX:</label>
-					<input class="form-control" type="file" id="pptxFile" name="pptxFile">
+					<!-- Drag & Drop Multi-File Upload: support up to 5 files -->
+					<label for="contentFile">Upload Content (up to 5 files):</label>
+					<div id="dropZone" class="drop-zone" style="border: 2px dashed var(--input-border); padding: 20px; text-align: center; cursor: pointer; position: relative;">
+						<p>Drag & drop files here, or click to select</p>
+						<input type="file" id="contentFile" name="contentFile" accept=".pptx,.pdf,.docx,.xlsx,.txt,.csv,.csv" multiple title="Upload up to 5 content files" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+					</div>
+					<div id="fileList" class="file-list" style="margin-top:8px;"></div>
 				</div>
+				<!-- Drag-and-drop script for multi-file upload -->
+				<script>
+				(function(){
+					const dropZone = document.getElementById('dropZone');
+					const fileInput = document.getElementById('contentFile');
+					const fileList = document.getElementById('fileList');
+					dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+					dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+					dropZone.addEventListener('drop', e => {
+						e.preventDefault();
+						dropZone.classList.remove('dragover');
+						const files = Array.from(e.dataTransfer.files).slice(0,5);
+						const dt = new DataTransfer();
+						files.forEach(f => dt.items.add(f));
+						fileInput.files = dt.files;
+						updateFileList();
+					});
+					fileInput.addEventListener('change', updateFileList);
+					function updateFileList(){
+						fileList.innerHTML = '';
+						Array.from(fileInput.files).slice(0,5).forEach(file => {
+							const div = document.createElement('div');
+							div.textContent = file.name;
+							fileList.appendChild(div);
+						});
+						if(fileInput.files.length > 5){
+							alert('You can only upload up to 5 files.');
+							const dt2 = new DataTransfer();
+							Array.from(fileInput.files).slice(0,5).forEach(f => dt2.items.add(f));
+							fileInput.files = dt2.files;
+							updateFileList();
+						}
+					}
+				})();
+				</script>
 				
 				<div class="form-group">
 					<!-- Textarea: allows pasting or editing of extracted slide text -->

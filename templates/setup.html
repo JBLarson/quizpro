@@ -254,5 +254,24 @@
 			});
 		})();
 	</script>
+	<script>
+		/* Auto-resize for pastedText textarea: grow from 100px to 200px, then scroll */
+		const textarea = document.getElementById('pastedText');
+		if (textarea) {
+			const maxH = 200;
+			textarea.style.height = '50px';
+			textarea.style.overflowY = 'hidden';
+			textarea.addEventListener('input', () => {
+				textarea.style.height = 'auto';
+				const newH = textarea.scrollHeight;
+				if (newH > maxH) {
+					textarea.style.height = maxH + 'px';
+					textarea.style.overflowY = 'auto';
+				} else {
+					textarea.style.height = newH + 'px';
+				}
+			});
+		}
+	</script>
 </body>
 </html>

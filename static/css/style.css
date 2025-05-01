@@ -273,37 +273,37 @@ button.theme-toggle:hover {
 
 /* Dark Mode Overrides */
 html.dark body {
-  background: #121212;
+  background: #292929;
   color: #e0e0e0;
 }
 html.dark .container {
-  background: #1e1e1e;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  background: #383838;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 html.dark input,
 html.dark select,
 html.dark textarea,
 html.dark button {
-  background: #2c2c2c;
+  background: #434343;
   color: #e0e0e0;
-  border: 1px solid #444;
+  border: 1px solid #5c5c5c;
 }
 html.dark button {
   background: #4f8cff; /* Accent remains blue */
 }
 html.dark button:disabled {
-  background: #555;
+  background: #4d4d4d;
 }
 html.dark #chat {
-  background: #262626;
-  border: 1px solid #444;
+  background: #434343;
+  border: 1px solid #5c5c5c;
 }
 html.dark a {
   color: #4f8cff;
 }
 html.dark .card {
-  background: #1e1e1e;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  background: #383838;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 html.dark h1,
 html.dark h2,
@@ -333,9 +333,9 @@ html.dark label {
 
 /* Dark mode overrides for anchor buttons */
 html.dark .btn, html.dark a.btn {
-  background: #2c2c2c;
+  background: #414141;
   color: #e0e0e0;
-  border: 1px solid #444;
+  border: 1px solid #5c5c5c;
 }
 
 /* Responsive adjustments for small screens */
@@ -361,5 +361,22 @@ html.dark .btn, html.dark a.btn {
   .input-with-button .btn {
     margin: 8px 0 0 0;
   }
+}
+
+/* Dark Mode Overrides */
+html.dark .menu-bar-wrapper {
+  background: #242424;
+}
+
+/* Textarea auto-resize and scrollable */
+textarea.form-control {
+  width: 90%;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto 16px;
+  resize: none;
+  min-height: 50px;
+  max-height: 200px;
+  overflow-y: hidden;
 }
 

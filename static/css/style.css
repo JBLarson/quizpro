@@ -98,26 +98,23 @@ button:disabled {
 /* Menu Bar Wrapper: full-width background bar */
 .menu-bar-wrapper {
   position: fixed;
-  width: 100%;
   top: 0;
   left: 0;
-  z-index: 1000;
+  width: 100%;
+  height: 60px;  /* fixed navbar height */
   background: var(--menu-bg);
   box-shadow: var(--menu-shadow);
-  height: 60px;  /* ensure dropdown toggle sits fully on the nav strip */
+  z-index: 1000;
 }
 
 /* Inner menu-bar: center content, constrain width, add padding */
 .menu-bar {
-  position: relative;
-  width: 100%;
-  max-width: 600px;
-  flex-wrap: wrap;
-  margin: 0 auto;
-  box-sizing: border-box;
-  padding: 12px 24px;
+  height: 100%;
   display: flex;
   align-items: center;
+  padding: 0 16px;
+  max-width: none !important;
+  margin: 0 !important;
 }
 
 /* Space between adjacent items */
@@ -419,20 +416,21 @@ textarea.form-control {
 
 /* Hamburger menu and dropdown for theme toggle */
 .menu-toggle {
-  position: fixed !important;
-  top: 12px !important;
-  right: 5% !important;
-  transform: none !important;
-  margin: 0 !important;
+  margin-left: auto;
+  margin-right: 2%;
+  background: transparent !important;
+  border: none !important;
+  font-size: 32px !important;
+  cursor: pointer;
+  color: var(--text-color) !important;
 }
 .menu-toggle:hover {
   filter: brightness(0.9);
 }
 .dropdown-menu {
-  /* position dropdown directly under navbar */
-  position: fixed !important;
-  top: 60px !important; /* navbar height */
-  right: 5% !important;
+  position: absolute !important;
+  top: calc(100% + 4px) !important;
+  right: 2% !important;
   background: var(--container-bg);
   box-shadow: var(--container-shadow);
   border: 1px solid var(--input-border);
@@ -440,7 +438,6 @@ textarea.form-control {
   padding: 8px;
   display: none;
   z-index: 1001;
-  overflow: hidden; /* prevent child backgrounds from spilling out */
 }
 .dropdown-menu button {
   background: none;
@@ -530,60 +527,31 @@ textarea.form-control {
   color: var(--link-hover-color);
 }
 
-/* Sidebar session title truncation and expansion */
-.sidebar-list a {
+/* Sidebar session title fade-out mask */
+.sidebar-list .session-link {
   display: block;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip; /* clip without ellipsis */
+  position: relative;
+  padding-right: 1em; /* space for fade */
+  color: var(--text-color) !important;
 }
-.sidebar-list a.expanded {
-  white-space: normal;
+.sidebar-list .session-link:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1em;
+  height: 100%;
+  background: linear-gradient(to left, var(--container-bg), transparent);
+  pointer-events: none;
 }
-
-.expand-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--link-color);
-  font-size: 1rem;
-  margin-left: 4px;
-  padding: 0;
+.sidebar-list .session-link.expanded:after {
+  display: none; /* remove fade when expanded */
 }
-.expand-btn:hover {
-  color: var(--link-hover-color);
-}
-
-/* Sidebar list items layout */
-.sidebar-list li {
-  display: flex;
-  align-items: center;
-}
-.sidebar-list .session-link {
-  flex: 1;
-  margin-right: 4px;
-}
-.sidebar-list .expand-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-color);
-  font-size: 1rem;
-  padding: 0 4px;
-}
-.sidebar-list .expand-btn:hover {
-  color: var(--button-bg);
-}
-.sidebar-list .delete-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-color);
-  font-size: 1rem;
-  padding: 0 4px;
-}
-.sidebar-list .delete-btn:hover {
-  color: red;
+.sidebar-list .session-link:hover {
+  color: var(--link-hover-color) !important;
 }
 
 /* Position sidebar list items for context menus */
@@ -676,5 +644,73 @@ textarea.form-control {
 .session-menu-item svg {
   fill: currentColor;
   margin-right: 8px;
+}
+
+/* Responsive tweaks for the hamburger toggle */
+@media (max-width: 768px) {
+  .menu-toggle {
+    font-size: 28px !important;   /* slightly smaller on tablets */
+    margin-right: 4% !important;
+  }
+}
+@media (max-width: 480px) {
+  .menu-bar {
+    justify-content: space-between;
+    padding: 0 12px;
+  }
+  .menu-toggle {
+    font-size: 24px !important;   /* adjust size for small screens */
+    margin: 8px 12px !important;
+  }
+}
+
+html.dark .menu-toggle {
+  color: var(--toggle-color) !important;
+}
+
+/* Restore expand button styling removed previously */
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--link-color);
+  font-size: 1rem;
+  margin-left: 4px;
+  padding: 0;
+}
+.expand-btn:hover {
+  color: var(--link-hover-color);
+}
+
+/* Sidebar list items layout */
+.sidebar-list li {
+  display: flex;
+  align-items: center;
+}
+.sidebar-list .session-link {
+  flex: 1;
+  margin-right: 4px;
+}
+.sidebar-list .expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 1rem;
+  padding: 0 4px;
+}
+.sidebar-list .expand-btn:hover {
+  color: var(--button-bg);
+}
+.sidebar-list .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 1rem;
+  padding: 0 4px;
+}
+.sidebar-list .delete-btn:hover {
+  color: red;
 }
 

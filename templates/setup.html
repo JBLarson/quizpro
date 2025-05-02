@@ -36,10 +36,10 @@
 							<button type="button" class="session-menu-item rename" data-session-id="{{ s.id }}">Rename</button>
 							<form method="POST" action="{{ url_for('delete_session', session_id=s.id) }}">
 								<button type="submit" class="session-menu-item delete">
+									Delete
 									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 										<path d="M3 6h18v2H3V6zm2 3h14v13H5V9zm3 2v9h2v-9H8zm4 0v9h2v-9h-2z"/>
 									</svg>
-									Delete
 								</button>
 							</form>
 						</div>
@@ -346,11 +346,13 @@
 		document.querySelectorAll('.menu-btn').forEach(btn => {
 			btn.addEventListener('click', e => {
 				e.stopPropagation();
-				// close other menus
-				document.querySelectorAll('.session-menu').forEach(menu => menu.style.display = 'none');
-				// open this menu
 				const menu = btn.nextElementSibling;
-				menu.style.display = 'block';
+				// toggle: if already open, close it; else close others and open
+				const isOpen = menu.style.display === 'block';
+				document.querySelectorAll('.session-menu').forEach(m => m.style.display = 'none');
+				if (!isOpen) {
+					menu.style.display = 'block';
+				}
 			});
 		});
 		document.addEventListener('click', () => {

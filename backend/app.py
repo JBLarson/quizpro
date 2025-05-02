@@ -251,7 +251,7 @@ def setup():
         content_str = '\n\n'.join(content_parts)
         # Prompt LLM: ask for a title, then the questions
         prompt = (
-            "Give your quiz a concise, professional, and studious title on the first line prefixed with 'Title: '. "
+            "Give your quiz a concise, professional, and studious title that clearly references the subject matter being studied on the first line prefixed with 'Title: '. "
             f"Then list exactly 20 multiple-choice quiz questions based solely on the following content: {content_str}. "
             "Do not include any other text before the title or questions. "
             "Start the questions directly with numbering (e.g., '1.'). "
@@ -389,7 +389,9 @@ def results():
     if not session_id:
         flash('No completed quiz to show results for.', 'info')
         return redirect(url_for('setup'))
-    # Load questions with user answers
+    # Load session to get title
+    session_obj = QuizSession.query.get(session_id)
+    title = session_obj.title or f"Session {session_id}"
     qs = QuizQuestion.query.filter_by(session_id=session_id).order_by(QuizQuestion.question_index).all()
     ans = [q.user_answer for q in qs]
     total_answered = len(qs)
@@ -397,6 +399,7 @@ def results():
     percent_wrong = int((wrong_count / total_answered) * 100) if total_answered else 0
     incorrect = wrong_count > 0
     return render_template('results.html',
+                           title=title,
                            questions=qs,
                            answers=ans,
                            incorrect=incorrect,

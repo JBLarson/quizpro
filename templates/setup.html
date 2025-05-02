@@ -10,94 +10,137 @@
 </head>
 <body>
 	<div class="menu-bar-wrapper">
-		<!-- Menu bar: includes theme toggle (dark/light mode) and logout link -->
 		<div class="menu-bar">
-			<button id="themeToggle" class="theme-toggle" type="button" title="Toggle light/dark mode">🌓</button>
-			<a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+			<!-- Hamburger menu toggles theme dropdown -->
+			<button id="menuToggle" class="menu-toggle" title="Menu">☰</button>
+			<div id="dropdownMenu" class="dropdown-menu">
+				<label class="switch">
+					Dark Mode
+					<input type="checkbox" id="themeToggle">
+					<span class="slider"></span>
+				</label>
+				<a href="{{ url_for('logout') }}" class="dropdown-item">Logout</a>
+			</div>
 		</div>
 	</div>
-
-	<div class="container">
-		<!-- Main container for the setup card and form -->
-		<div class="card">
-			<h2 class="header">Setup Your Session</h2>
-
-			<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
-				<!-- Setup Form: submits API key, chosen model, PPTX file, and pasted text to backend -->
-				<!-- API Key Section -->
-				<div class="form-group">
-					<!-- API Key Input: enter or update the user's AI service key (Gemini) -->
-					<label for="apiKey">API Key:</label>
-					<div class="input-with-button">
-						<input class="form-control" type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required value="{{ keys.get('gemini', '') }}">
-						<button type="button" id="saveKeyBtn" class="btn">Save API Key</button>
+	<!-- Layout: sidebar for past sessions + main content -->
+	<div class="page-layout">
+		<aside class="sidebar">
+			<h3>Past Sessions</h3>
+			<ul class="sidebar-list">
+				{% for s in sessions %}
+					<li>
+						<a href="{{ url_for('resume_session', session_id=s.id) }}" class="session-link">{{ s.title or 'Session ' ~ loop.index }} ({{ s.correct }}/{{ s.total }})</a>
+						<button type="button" class="menu-btn" title="Session actions">…</button>
+						<div class="session-menu">
+							<button type="button" class="session-menu-item rename" data-session-id="{{ s.id }}">Rename</button>
+							<form method="POST" action="{{ url_for('delete_session', session_id=s.id) }}">
+								<button type="submit" class="session-menu-item delete">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M3 6h18v2H3V6zm2 3h14v13H5V9zm3 2v9h2v-9H8zm4 0v9h2v-9h-2z"/>
+									</svg>
+									Delete
+								</button>
+							</form>
+						</div>
+					</li>
+				{% endfor %}
+			</ul>
+		</aside>
+		<main class="main-content">
+			<!-- Flash messages -->
+			{% with messages = get_flashed_messages(with_categories=true) %}
+				{% if messages %}
+					<div class="flash-messages">
+						{% for category, message in messages %}
+							<div class="alert alert-{{ category }}">{{ message }}</div>
+						{% endfor %}
 					</div>
-				</div>
+				{% endif %}
+			{% endwith %}
+			<div class="container">
+				<!-- Main container for the setup card and form -->
+				<div class="card">
+					<h2 class="header">Setup Your Session</h2>
 
-				<!-- LLM Model Selection -->
-				<h3>Select LLM Model</h3>
-				<!-- AI Model Selection: dropdown to pick which language model to use for question generation -->
-				<label for="modelSelect">Model:</label>
-				<select id="modelSelect" name="modelSelect" required>
-					<option value="gemini">Gemini</option>
-				</select>
+					<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
+						<!-- Setup Form: submits API key, chosen model, PPTX file, and pasted text to backend -->
+						<!-- API Key Section -->
+						<div class="form-group">
+							<!-- API Key Input: enter or update the user's AI service key (Gemini) -->
+							<label for="apiKey">API Key:</label>
+							<div class="input-with-button">
+								<input class="form-control" type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required value="{{ keys.get('gemini', '') }}">
+								<button type="button" id="saveKeyBtn" class="btn">Save API Key</button>
+							</div>
+						</div>
 
-				<!-- Upload PPTX Section -->
-				<div class="form-group">
-					<!-- Drag & Drop Multi-File Upload: support up to 5 files -->
-					<label for="contentFile">Upload Content (up to 5 files):</label>
-					<div id="dropZone" class="drop-zone" style="border: 2px dashed var(--input-border); padding: 20px; text-align: center; cursor: pointer; position: relative;">
-						<p>Drag & drop files here, or click to select</p>
-						<input type="file" id="contentFile" name="contentFile" accept=".pptx,.pdf,.docx,.xlsx,.txt,.csv,.csv" multiple title="Upload up to 5 content files" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
-					</div>
-					<div id="fileList" class="file-list" style="margin-top:8px;"></div>
-				</div>
-				<!-- Drag-and-drop script for multi-file upload -->
-				<script>
-				(function(){
-					const dropZone = document.getElementById('dropZone');
-					const fileInput = document.getElementById('contentFile');
-					const fileList = document.getElementById('fileList');
-					dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-					dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-					dropZone.addEventListener('drop', e => {
-						e.preventDefault();
-						dropZone.classList.remove('dragover');
-						const files = Array.from(e.dataTransfer.files).slice(0,5);
-						const dt = new DataTransfer();
-						files.forEach(f => dt.items.add(f));
-						fileInput.files = dt.files;
-						updateFileList();
-					});
-					fileInput.addEventListener('change', updateFileList);
-					function updateFileList(){
-						fileList.innerHTML = '';
-						Array.from(fileInput.files).slice(0,5).forEach(file => {
-							const div = document.createElement('div');
-							div.textContent = file.name;
-							fileList.appendChild(div);
-						});
-						if(fileInput.files.length > 5){
-							alert('You can only upload up to 5 files.');
-							const dt2 = new DataTransfer();
-							Array.from(fileInput.files).slice(0,5).forEach(f => dt2.items.add(f));
-							fileInput.files = dt2.files;
-							updateFileList();
-						}
-					}
-				})();
-				</script>
-				
-				<div class="form-group">
-					<!-- Textarea: allows pasting or editing of extracted slide text -->
-					<textarea class="form-control" name="pastedText" id="pastedText" rows="10" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
-				</div>
-				
-				<button type="submit" class="btn">Submit All</button>
-				<!-- Submit Button: finalize configuration and generate quiz questions -->
-			</form>
-		</div>  <!-- end card -->
-	</div>  <!-- end container -->
+						<!-- LLM Model Selection -->
+						<h3>Select LLM Model</h3>
+						<!-- AI Model Selection: dropdown to pick which language model to use for question generation -->
+						<label for="modelSelect">Model:</label>
+						<select id="modelSelect" name="modelSelect" required>
+							<option value="gemini">Gemini</option>
+						</select>
+
+						<!-- Upload PPTX Section -->
+						<div class="form-group">
+							<!-- Drag & Drop Multi-File Upload: support up to 5 files -->
+							<label for="contentFile">Upload Content (up to 5 files):</label>
+							<div id="dropZone" class="drop-zone" style="border: 2px dashed var(--input-border); padding: 20px; text-align: center; cursor: pointer; position: relative;">
+								<p>Drag & drop files here, or click to select</p>
+								<input type="file" id="contentFile" name="contentFile" accept=".pptx,.pdf,.docx,.xlsx,.txt,.csv,.csv" multiple title="Upload up to 5 content files" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+							</div>
+							<div id="fileList" class="file-list" style="margin-top:8px;"></div>
+						</div>
+						<!-- Drag-and-drop script for multi-file upload -->
+						<script>
+						(function(){
+							const dropZone = document.getElementById('dropZone');
+							const fileInput = document.getElementById('contentFile');
+							const fileList = document.getElementById('fileList');
+							dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+							dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+							dropZone.addEventListener('drop', e => {
+								e.preventDefault();
+								dropZone.classList.remove('dragover');
+								const files = Array.from(e.dataTransfer.files).slice(0,5);
+								const dt = new DataTransfer();
+								files.forEach(f => dt.items.add(f));
+								fileInput.files = dt.files;
+								updateFileList();
+							});
+							fileInput.addEventListener('change', updateFileList);
+							function updateFileList(){
+								fileList.innerHTML = '';
+								Array.from(fileInput.files).slice(0,5).forEach(file => {
+									const div = document.createElement('div');
+									div.textContent = file.name;
+									fileList.appendChild(div);
+								});
+								if(fileInput.files.length > 5){
+									alert('You can only upload up to 5 files.');
+									const dt2 = new DataTransfer();
+									Array.from(fileInput.files).slice(0,5).forEach(f => dt2.items.add(f));
+									fileInput.files = dt2.files;
+									updateFileList();
+								}
+							}
+						})();
+						</script>
+						
+						<div class="form-group">
+							<!-- Textarea: allows pasting or editing of extracted slide text -->
+							<textarea class="form-control" name="pastedText" id="pastedText" rows="10" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
+						</div>
+						
+						<button type="submit" class="btn">Submit All</button>
+						<!-- Submit Button: finalize configuration and generate quiz questions -->
+					</form>
+				</div>  <!-- end card -->
+			</div>  <!-- end container -->
+		</main>
+	</div>  <!-- end page-layout -->
 
 	<!-- Config Section 
 	<h3>Configure Chat Behavior</h3>
@@ -243,15 +286,26 @@
 		(function() {
 			const toggle = document.getElementById('themeToggle');
 			const root = document.documentElement;
-			// Apply saved theme
+			// Apply saved theme and sync toggle state
 			const current = localStorage.getItem('theme') || 'light';
-			if (current === 'dark') root.classList.add('dark');
-			// Toggle on click
-			toggle.addEventListener('click', () => {
-				root.classList.toggle('dark');
-				const theme = root.classList.contains('dark') ? 'dark' : 'light';
-				localStorage.setItem('theme', theme);
-			});
+			if (current === 'dark') {
+				root.classList.add('dark');
+				if (toggle) toggle.checked = true;
+			} else {
+				if (toggle) toggle.checked = false;
+			}
+			// Toggle theme based on checkbox change
+			if (toggle) {
+				toggle.addEventListener('change', () => {
+					if (toggle.checked) {
+						root.classList.add('dark');
+						localStorage.setItem('theme', 'dark');
+					} else {
+						root.classList.remove('dark');
+						localStorage.setItem('theme', 'light');
+					}
+				});
+			}
 		})();
 	</script>
 	<script>
@@ -273,5 +327,54 @@
 			});
 		}
 	</script>
+	<script>
+		document.getElementById('menuToggle').addEventListener('click', () => {
+			const menu = document.getElementById('dropdownMenu');
+			menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+		});
+		// Close dropdown if clicked outside
+		document.addEventListener('click', e => {
+			const menu = document.getElementById('dropdownMenu');
+			const toggle = document.getElementById('menuToggle');
+			if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+				menu.style.display = 'none';
+			}
+		});
+	</script>
+	<script>
+		// Session menu toggle and outside click
+		document.querySelectorAll('.menu-btn').forEach(btn => {
+			btn.addEventListener('click', e => {
+				e.stopPropagation();
+				// close other menus
+				document.querySelectorAll('.session-menu').forEach(menu => menu.style.display = 'none');
+				// open this menu
+				const menu = btn.nextElementSibling;
+				menu.style.display = 'block';
+			});
+		});
+		document.addEventListener('click', () => {
+			document.querySelectorAll('.session-menu').forEach(menu => menu.style.display = 'none');
+		});
+		// Rename handler
+		document.querySelectorAll('.session-menu-item.rename').forEach(btn => {
+			btn.addEventListener('click', async () => {
+				const sessionId = btn.dataset.sessionId;
+				const link = btn.closest('li').querySelector('.session-link');
+				const newTitle = prompt('Enter new title:', link.textContent.split(' (')[0]);
+				if (newTitle) {
+					try {
+						const resp = await fetch(`/sessions/${sessionId}/rename`, {
+							method: 'POST', headers: {'Content-Type':'application/json'},
+							body: JSON.stringify({title: newTitle})
+						});
+						const data = await resp.json();
+						if (data.status === 'ok') link.textContent = data.title + link.textContent.slice(link.textContent.indexOf(' ('));
+					} catch (err) { console.error(err); }
+				}
+			});
+		});
+	</script>
 </body>
 </html>
+

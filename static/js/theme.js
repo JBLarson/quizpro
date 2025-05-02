@@ -1,17 +1,25 @@
 // static/js/theme.js
 // Centralized theme toggle logic for QuizPro
 document.addEventListener('DOMContentLoaded', () => {
-  const toggleBtn = document.getElementById('themeToggle');
+  const toggle = document.getElementById('themeToggle');
   const root = document.documentElement;
-  // Apply saved theme preference
+  // Apply saved theme preference and set toggle state
   const currentTheme = localStorage.getItem('theme') || 'light';
   if (currentTheme === 'dark') {
     root.classList.add('dark');
   }
-  if (!toggleBtn) return;
-  // Toggle theme on button click
-  toggleBtn.addEventListener('click', () => {
-    const isDark = root.classList.toggle('dark');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  if (toggle && toggle.type === 'checkbox') {
+    toggle.checked = (currentTheme === 'dark');
+  }
+  if (!toggle) return;
+  // Toggle theme based on checkbox change
+  toggle.addEventListener('change', () => {
+    if (toggle.checked) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   });
 }); 

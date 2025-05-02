@@ -9,7 +9,7 @@
 # --------------------------------
 # Imports & SDK Configuration
 # --------------------------------
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session  # Core Flask components
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session, abort  # Core Flask components
 from flask_cors import CORS  # Enable cross-origin requests for frontend static files
 import os, json  # os for file paths/env, json for data serialization
 from dotenv import load_dotenv  # Load .env file into environment
@@ -19,12 +19,12 @@ from .extensions import db, migrate, login_manager  # Initialize DB, migrations,
 from flask_admin import Admin  # Admin UI for managing models
 from flask_admin.contrib.sqla import ModelView  # SQLAlchemy views for admin
 from flask_login import login_user, logout_user, current_user, login_required  # User session management
-from .models import User, ApiKey, QuizSession, QuizQuestion  # ORM models
+from .models import User, ApiKey, QuizSession, QuizQuestion, ChatMessage  # ORM models
 from .parser_pptx_json import pptx_to_json  # PPTX parsing utility
 from .parser_pdf_text import pdf_to_text  # PDF parsing utility
 from .parser_docx_text import docx_to_text  # DOCX parsing utility
 from .parser_xlsx_text import xlsx_to_text  # XLSX parsing utility
-import google.generativeai as genai  # Google Gemini SDK for AI generation
+import google.genai as genai  # Google GenAI SDK for Gemini
 
 # --------------------------------
 # Environment & App Initialization
@@ -179,6 +179,25 @@ def setup():
     # Fetch stored Gemini API key for current user
     gemini_record = ApiKey.query.filter_by(user_id=current_user.id, model='gemini').first()
     keys = {'gemini': gemini_record.key if gemini_record else ''}
+
+    # Build session history for sidebar
+    user_sessions = QuizSession.query.filter_by(user_id=current_user.id) \
+        .order_by(QuizSession.created_at.desc()).all()
+    sessions_stats = []
+    for idx, s in enumerate(user_sessions, start=1):
+        qs = QuizQuestion.query.filter_by(session_id=s.id).all()
+        total = len(qs)
+        correct = sum(1 for q in qs if q.user_answer == q.correct_answer)
+        # include title if set, else fallback to Session #{idx}
+        sessions_stats.append({
+            'id': s.id,
+            'title': s.title or f"Session {idx}",
+            'created_at': s.created_at,
+            'status': s.status,
+            'total': total,
+            'correct': correct
+        })
+
     if request.method == 'POST':
         selected_model = 'gemini'
         # Use form API key input or fallback to stored
@@ -228,24 +247,34 @@ def setup():
         # Ensure there is some content
         if not content_parts:
             flash("Please upload a file or paste some text.", "error")
-            return render_template('setup.html', keys=keys)
+            return render_template('setup.html', keys=keys, sessions=sessions_stats)
         content_str = '\n\n'.join(content_parts)
-        # Prompt LLM: no intros, start immediately with questions
+        # Prompt LLM: ask for a title, then the questions
         prompt = (
-            f"Please list exactly 20 multiple-choice quiz questions based solely on the following content: {content_str}. "
-            "Do not include any introductory or explanatory text—start directly with '1.'. "
-            "Only generate questions on substantive topics and concepts; ignore metadata such as presenter names and slide header dates. "
-            "However, if a date is part of the substantive content (e.g., date of an event), you may create questions about it. "
+            "Give your quiz a concise, professional, and studious title on the first line prefixed with 'Title: '. "
+            f"Then list exactly 20 multiple-choice quiz questions based solely on the following content: {content_str}. "
+            "Do not include any other text before the title or questions. "
+            "Start the questions directly with numbering (e.g., '1.'). "
             "For each question, provide four options labeled A, B, C, D, then 'Answer: X' where X is the correct option. "
             "Separate each question with <|Q|>."
         )
         # Generate questions and parse to structured dicts
         questions = generate_questions(api_key, 'gemini', prompt)
-        if not questions:
+        print("[DEBUG] raw quiz string:", questions)
+        # Attempt to extract a title line if AI provided one in the format "Title: ..."
+        title = None
+        lines = questions.splitlines()
+        if lines and lines[0].lower().startswith('title:'):
+            title = lines[0].split(':', 1)[1].strip()
+            # remove title from questions body
+            questions_body = '\n'.join(lines[1:])
+        else:
+            questions_body = questions
+        if not questions_body:
             flash("Error generating questions. Please check the API configuration.", "error")
-            return render_template('setup.html', keys=keys)
+            return render_template('setup.html', keys=keys, sessions=sessions_stats)
         import re
-        raw_items = questions.split('<|Q|>')
+        raw_items = questions_body.split('<|Q|>')
         parsed_qs = []
         for item in raw_items:
             lines = [l.strip() for l in item.splitlines() if l.strip()]
@@ -266,16 +295,33 @@ def setup():
             # Only keep entries with a valid correct answer and exactly 4 options
             if correct and len(options) == 4:
                 parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
-        # Initialize quiz in session and redirect
-        session['questions'] = parsed_qs
-        # Store desired total for progress display (always 20 questions)
-        session['desired_total'] = 20
-        session['answers'] = []
+        # Persist a new quiz session and its questions
+        new_session = QuizSession(user_id=current_user.id, session_type='quiz')
+        # Save extracted title if present
+        if title:
+            new_session.title = title
+        db.session.add(new_session)
+        db.session.commit()
+        # Save each question to the database
+        for idx, q in enumerate(parsed_qs):
+            qq = QuizQuestion(
+                session_id=new_session.id,
+                question_index=idx,
+                prompt=q['prompt'],
+                options=q['options'],
+                correct_answer=q['answer']
+            )
+            db.session.add(qq)
+        db.session.commit()
+        # Track this quiz in user session for navigation
+        session.pop('quiz_session_id', None)
+        session.pop('current_question_index', None)
+        session['quiz_session_id'] = new_session.id
         session['current_question_index'] = 0
         return redirect(url_for('chat'))
 
-    # GET request: render setup with stored Gemini key
-    return render_template('setup.html', keys=keys)
+    # GET: render setup with stored key and sessions history
+    return render_template('setup.html', keys=keys, sessions=sessions_stats)
 
 
 # --------------------------------
@@ -288,38 +334,44 @@ def chat():
     GET  -> render the next quiz question with options
     POST -> record the user's answer, advance index, redirect to next question or results
     """
-    qs = session.get('questions', [])
-    # If no questions or we've gone past the last one, redirect to results
+    # Fetch current quiz session
+    session_id = session.get('quiz_session_id')
+    # Load session object to get title
+    session_obj = QuizSession.query.get(session_id)
+    quiz_title = session_obj.title or f"Quiz Session {session_obj.id}"
+    if not session_id:
+        flash('No active quiz. Please start a quiz.', 'info')
+        return redirect(url_for('setup'))
+    # Load questions from DB
+    qs = QuizQuestion.query.filter_by(session_id=session_id).order_by(QuizQuestion.question_index).all()
     if not qs:
-        flash('No questions available. Please set up a quiz.', 'info')
+        flash('No questions found for this quiz.', 'info')
         return redirect(url_for('setup'))
     idx = session.get('current_question_index', 0)
-    # Skip any non-MCQ entries (e.g., free-response placeholder) at the start
-    while idx < len(qs) and not qs[idx].get('options'):
-        idx += 1
-    # If we've exhausted all questions, go to results page
+    # Ensure idx is within bounds
     if idx >= len(qs):
         return redirect(url_for('results'))
-    session['current_question_index'] = idx
 
     if request.method == 'POST':
-        ans = request.form.get('answer', '').strip()
-        session['answers'].append(ans)
+        # Record user answer in DB
+        answer = request.form.get('answer', '').strip()
+        q = qs[idx]
+        q.user_answer = answer
+        from datetime import datetime
+        q.answered_at = datetime.utcnow()
+        db.session.commit()
         idx += 1
         session['current_question_index'] = idx
 
         if idx < len(qs):
             return redirect(url_for('chat'))
-        else:
-            return redirect(url_for('results'))
+        return redirect(url_for('results'))
 
-    current = qs[idx] if idx < len(qs) else None
-    # Always display the actual number of questions in the session
+    # Render next question
+    current = qs[idx]
     total_questions = len(qs)
-    return render_template('chat.html',
-                           question=current,
-                           index=idx+1,
-                           total=total_questions)
+    return render_template('chat.html', question=current, index=idx+1,
+                           total=total_questions, title=quiz_title)
 
 
 # --------------------------------
@@ -332,14 +384,17 @@ def results():
     Display overall performance, list each question with user and correct answers,
     and provide actions to retry incorrect or start a new quiz.
     """
-    qs = session.get('questions', [])
-    ans = session.get('answers', [])
-    # Count incorrect answers
-    wrong_count = sum(1 for q, a in zip(qs, ans) if a != q.get('answer'))
-    total_answered = len(ans)
-    # Calculate percentage wrong (rounded to nearest integer)
+    # Fetch current quiz session
+    session_id = session.get('quiz_session_id')
+    if not session_id:
+        flash('No completed quiz to show results for.', 'info')
+        return redirect(url_for('setup'))
+    # Load questions with user answers
+    qs = QuizQuestion.query.filter_by(session_id=session_id).order_by(QuizQuestion.question_index).all()
+    ans = [q.user_answer for q in qs]
+    total_answered = len(qs)
+    wrong_count = sum(1 for q in qs if q.user_answer != q.correct_answer)
     percent_wrong = int((wrong_count / total_answered) * 100) if total_answered else 0
-    # Determine if any answers were incorrect for UI flags
     incorrect = wrong_count > 0
     return render_template('results.html',
                            questions=qs,
@@ -357,21 +412,38 @@ def results():
 @login_required
 def retry_incorrect():
     """
-    Filter stored questions to those answered incorrectly, reset session tracking,
-    and redirect to chat for retrying these questions.
+    Create a new quiz session for only the questions answered incorrectly.
     """
-    qs = session.get('questions', [])
-    ans = session.get('answers', [])
-    # Filter to only questions where user's answer != correct
-    retry_qs = [q for q, a in zip(qs, ans) if a != q.get('answer')]
-    if not retry_qs:
+    session_id = session.get('quiz_session_id')
+    if not session_id:
+        flash('No active quiz session. Please start a quiz.', 'info')
+        return redirect(url_for('setup'))
+    # Load incorrect questions from DB
+    wrong_qs = QuizQuestion.query.filter_by(session_id=session_id).\
+               filter(QuizQuestion.user_answer != QuizQuestion.correct_answer).all()
+    if not wrong_qs:
         flash('No incorrect questions to retry.', 'info')
         return redirect(url_for('results'))
-    session['questions'] = retry_qs
-    session['answers'] = []
+    # Create new quiz session
+    new_session = QuizSession(user_id=current_user.id, session_type='quiz')
+    db.session.add(new_session)
+    db.session.commit()
+    # Persist only wrong questions to new session
+    for idx, q in enumerate(wrong_qs):
+        new_q = QuizQuestion(
+            session_id=new_session.id,
+            question_index=idx,
+            prompt=q.prompt,
+            options=q.options,
+            correct_answer=q.correct_answer
+        )
+        db.session.add(new_q)
+    db.session.commit()
+    # Reset session tracking
+    session.pop('quiz_session_id', None)
+    session.pop('current_question_index', None)
+    session['quiz_session_id'] = new_session.id
     session['current_question_index'] = 0
-    # Update display total to match retry set
-    session['desired_total'] = len(retry_qs)
     return redirect(url_for('chat'))
 
 
@@ -398,15 +470,30 @@ def upload_pptx():
 # --------------------------------
 def generate_questions(api_key, model_name, prompt):
     """
-    Configure the AI SDK with the provided key and model,
-    send the prompt text to the model, and return its generated response.
+    Use Google GenAI client to send the prompt text and return its generated response.
     """
     if not api_key:
         return ""
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(f"{model_name}-2.0-flash")
-    response = model.generate_content(prompt)
-    return getattr(response, "text", response)
+    # Initialize the GenAI client with API key
+    client = genai.Client(api_key=api_key)
+    # Call the GenAI model, handling overloads or API errors gracefully
+    try:
+        response = client.models.generate_content(
+            model=f"{model_name}-2.0-flash",
+            contents=[{"text": prompt}],
+            config={"temperature": 0.2, "max_output_tokens": 512}
+        )
+    except Exception as e:
+        # Handle API errors (e.g., model overload) and other exceptions
+        print(f"[ERROR] GenAI API call failed: {e}")
+        return ""
+    # Extract the generated text from the first candidate's content parts
+    text = ""
+    if response and getattr(response, 'candidates', None):
+        content = response.candidates[0].content
+        # Combine all text parts into a single string
+        text = "".join(part.text or "" for part in (content.parts or []))
+    return text
 
 
 # --------------------------------
@@ -416,32 +503,27 @@ def generate_questions(api_key, model_name, prompt):
 @login_required
 def adaptive_followup():
     """
-    Build a follow-up prompt for questions answered incorrectly,
-    generate new MCQs, reset session, and redirect to chat for review.
+    Generate new follow-up quiz on topics user got wrong, using AI and DB.
     """
-    # Fetch stored API key
     api_key = get_user_api_key()
     if not api_key:
         return redirect(url_for('setup'))
-    # Get current quiz and answers from session
-    qs = session.get('questions', [])
-    ans = session.get('answers', [])
-    # Filter incorrect questions
-    wrong_qs = [q for q, a in zip(qs, ans) if a != q.get('answer')]
+    session_id = session.get('quiz_session_id')
+    if not session_id:
+        flash('No active quiz session. Please start a quiz.', 'info')
+        return redirect(url_for('setup'))
+    # Load incorrect questions from DB
+    wrong_qs = QuizQuestion.query.filter_by(session_id=session_id)\
+               .filter(QuizQuestion.user_answer != QuizQuestion.correct_answer).all()
     if not wrong_qs:
         flash('No incorrect questions to generate follow-ups.', 'info')
         return redirect(url_for('results'))
-    # Build a textual list of the mis-answered prompts
+    # Build AI prompt list
     import re
-    payload_prompts = "\n".join([
-        f"{i+1}. {re.sub(r'^\d+\.\s*', '', q['prompt'])}" for i, q in enumerate(wrong_qs)
-    ])
-    # Always generate exactly 10 follow-up questions
-    num_followups = 10
-    # Prompt LLM for follow-up quiz on the same topics, phrased differently
+    payload_prompts = "\n".join([f"{i+1}. {re.sub(r'^\d+\.\s*', '', q.prompt)}" for i, q in enumerate(wrong_qs)])
     prompt_text = (
         f"Here are the questions you answered incorrectly:\n{payload_prompts}\n"
-        f"Please generate 10 new multiple-choice questions on these same topics, phrased differently. "
+        "Please generate 10 new multiple-choice questions on these same topics, phrased differently. "
         "Provide four options labeled A, B, C, D, then 'Answer: X' for the correct option. "
         "Separate each question with <|Q|> and start immediately without any extra text."
     )
@@ -449,7 +531,7 @@ def adaptive_followup():
     if not raw:
         flash('Error generating follow-up questions. Please try again.', 'error')
         return redirect(url_for('results'))
-    # Parse generated follow-up questions
+    # Parse AI output
     items = raw.split('<|Q|>')
     followups = []
     for item in items:
@@ -467,19 +549,113 @@ def adaptive_followup():
             m2 = re.search(r'Answer[:\s]*([A-D])', line, re.IGNORECASE)
             if m2:
                 correct = m2.group(1)
-        # Only include true MCQs with 4 options
         if correct and len(options) == 4:
             followups.append({'prompt': question_text, 'options': options, 'answer': correct})
-    # If no valid follow-up questions generated, show an error instead of empty quiz
     if not followups:
         flash('No follow-up questions generated. Please try again.', 'error')
         return redirect(url_for('results'))
-    # Restart session with follow-up questions
-    session['questions'] = followups
-    session['answers'] = []
+    # Create new quiz session for follow-ups
+    new_session = QuizSession(user_id=current_user.id, session_type='quiz')
+    db.session.add(new_session)
+    db.session.commit()
+    for idx, f in enumerate(followups):
+        qq = QuizQuestion(
+            session_id=new_session.id,
+            question_index=idx,
+            prompt=f['prompt'],
+            options=f['options'],
+            correct_answer=f['answer']
+        )
+        db.session.add(qq)
+    db.session.commit()
+    session.pop('quiz_session_id', None)
+    session.pop('current_question_index', None)
+    session['quiz_session_id'] = new_session.id
     session['current_question_index'] = 0
-    # Update display total to match follow-up set
-    session['desired_total'] = len(followups)
+    return redirect(url_for('chat'))
+
+
+# --------------------------------
+# Delete Session Route
+# --------------------------------
+@app.route('/sessions/<int:session_id>/delete', methods=['POST'])
+@login_required
+def delete_session(session_id):
+    """Delete a quiz session and its associated questions and messages."""
+    s = QuizSession.query.get_or_404(session_id)
+    if s.user_id != current_user.id:
+        abort(403)
+    # delete related records
+    QuizQuestion.query.filter_by(session_id=session_id).delete()
+    ChatMessage.query.filter_by(session_id=session_id).delete()
+    db.session.delete(s)
+    db.session.commit()
+    flash('Quiz session deleted.', 'success')
+    return redirect(url_for('setup'))
+
+
+# --------------------------------
+# Session Rename Route
+# --------------------------------
+@app.route('/sessions/<int:session_id>/rename', methods=['POST'])
+@login_required
+def rename_session(session_id):
+    """Rename a quiz session title via AJAX."""
+    s = QuizSession.query.get_or_404(session_id)
+    if s.user_id != current_user.id:
+        abort(403)
+    data = request.get_json() or {}
+    new_title = data.get('title', '').strip()
+    if not new_title:
+        return jsonify(error='Invalid title'), 400
+    s.title = new_title
+    db.session.commit()
+    return jsonify(status='ok', title=s.title)
+
+
+# --------------------------------
+# Session History Routes
+# --------------------------------
+@app.route('/sessions')
+@login_required
+def sessions_list():
+    """Show all quiz/chat sessions for the current user."""
+    user_sessions = QuizSession.query.filter_by(user_id=current_user.id) \
+        .order_by(QuizSession.created_at.desc()).all()
+    stats = []
+    for s in user_sessions:
+        qs = QuizQuestion.query.filter_by(session_id=s.id).all()
+        total = len(qs)
+        correct = sum(1 for q in qs if q.user_answer == q.correct_answer)
+        stats.append({
+            'id': s.id,
+            'title': s.title or f"Session {s.id}",
+            'created_at': s.created_at,
+            'status': s.status,
+            'total': total,
+            'correct': correct
+        })
+    return render_template('sessions.html', sessions=stats)
+
+@app.route('/sessions/<int:session_id>/resume')
+@login_required
+def resume_session(session_id):
+    """Restore a past session and redirect to the quiz/chat at the next unanswered question."""
+    s = QuizSession.query.get_or_404(session_id)
+    if s.user_id != current_user.id:
+        abort(403)
+    qs = QuizQuestion.query.filter_by(session_id=session_id) \
+        .order_by(QuizQuestion.question_index).all()
+    next_idx = 0
+    for idx, q in enumerate(qs):
+        if not q.user_answer:
+            next_idx = idx
+            break
+        next_idx = idx + 1
+    session.pop('quiz_session_id', None)
+    session.pop('current_question_index', None)
+    session['quiz_session_id'] = session_id
+    session['current_question_index'] = next_idx
     return redirect(url_for('chat'))
 
 

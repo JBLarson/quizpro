@@ -67,11 +67,16 @@ class ApiKey(db.Model):
 # - questions: list of QuizQuestion records in this session
 # ------------------------------------------------------------------------------
 class QuizSession(db.Model):
-    __tablename__ = 'quiz_session'
+    __tablename__ = 'quiz_sessions'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    session_type = db.Column(db.String(20), nullable=False, default='quiz')  # 'quiz' or 'chat'
+    title = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='in_progress')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     questions = db.relationship('QuizQuestion', backref='session', lazy=True)
+    messages = db.relationship('ChatMessage', backref='session', lazy=True)
 
 # ------------------------------------------------------------------------------
 # QuizQuestion Model
@@ -85,10 +90,24 @@ class QuizSession(db.Model):
 # - created_at: timestamp when the question was generated/answered
 # ------------------------------------------------------------------------------
 class QuizQuestion(db.Model):
-    __tablename__ = 'quiz_question'
+    __tablename__ = 'quiz_questions'
     id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('quiz_session.id'), nullable=False)
-    index = db.Column(db.Integer, nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('quiz_sessions.id'), nullable=False)
+    question_index = db.Column(db.Integer, nullable=False)
     prompt = db.Column(db.Text, nullable=False)
-    user_answer = db.Column(db.Text)
+    options = db.Column(db.JSON, nullable=False)
+    correct_answer = db.Column(db.String(1), nullable=False)
+    user_answer = db.Column(db.String(1))
+    answered_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# ----------------------------------------------------------------------------
+# ChatMessage Model: free-form chat logs for sessions
+# ----------------------------------------------------------------------------
+class ChatMessage(db.Model):
+    __tablename__ = 'chat_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('quiz_sessions.id'), nullable=False)
+    sender = db.Column(db.String(20), nullable=False)  # 'user' or 'ai'
+    message = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

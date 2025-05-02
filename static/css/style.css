@@ -98,16 +98,18 @@ button:disabled {
 /* Menu Bar Wrapper: full-width background bar */
 .menu-bar-wrapper {
   position: fixed;
+  width: 100%;
   top: 0;
   left: 0;
-  width: 100%;
+  z-index: 1000;
   background: var(--menu-bg);
   box-shadow: var(--menu-shadow);
-  z-index: 1000;
+  height: 60px;  /* ensure dropdown toggle sits fully on the nav strip */
 }
 
 /* Inner menu-bar: center content, constrain width, add padding */
 .menu-bar {
+  position: relative;
   width: 100%;
   max-width: 600px;
   flex-wrap: wrap;
@@ -378,5 +380,301 @@ textarea.form-control {
   min-height: 50px;
   max-height: 200px;
   overflow-y: hidden;
+}
+
+/* Layout: sidebar and main content for sessions */
+.page-layout {
+  display: flex;
+  min-height: calc(100vh - 60px); /* account for nav bar height */
+}
+.sidebar {
+  width: 240px;
+  background: var(--container-bg);
+  padding: 16px;
+  border-right: 1px solid var(--input-border);
+  overflow-y: auto;
+}
+.sidebar h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+}
+.sidebar-list li + li {
+  margin-top: 8px;
+}
+.sidebar-list a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+.sidebar-list a:hover {
+  text-decoration: underline;
+}
+.main-content {
+  flex: 1;
+  padding: 16px;
+}
+
+/* Hamburger menu and dropdown for theme toggle */
+.menu-toggle {
+  position: fixed !important;
+  top: 12px !important;
+  right: 5% !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+.menu-toggle:hover {
+  filter: brightness(0.9);
+}
+.dropdown-menu {
+  /* position dropdown directly under navbar */
+  position: fixed !important;
+  top: 60px !important; /* navbar height */
+  right: 5% !important;
+  background: var(--container-bg);
+  box-shadow: var(--container-shadow);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 8px;
+  display: none;
+  z-index: 1001;
+  overflow: hidden; /* prevent child backgrounds from spilling out */
+}
+.dropdown-menu button {
+  background: none;
+  border: none;
+  color: var(--link-color);
+  font-size: 20px;
+  cursor: pointer;
+}
+.dropdown-menu button:hover {
+  filter: brightness(0.9);
+}
+
+/* Adjust nav bar wrapper for position */
+.menu-bar-wrapper {
+  position: relative;
+}
+
+/* Position the hamburger menu toggle at the far right with padding */
+.menu-bar .menu-toggle {
+  margin-left: auto;
+  margin-right: 5%;
+}
+
+/* Shift dropdown menu to align under the hamburger */
+.dropdown-menu {
+  right: 5%;
+}
+
+.dropdown-menu > * {
+  display: block;
+  /* width removed to respect container padding */
+  text-align: left;
+  margin: 4px 0;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-color);
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch .slider {
+  position: relative;
+  width: 40px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 20px;
+  margin-left: 8px;
+  transition: background 0.2s;
+}
+.switch .slider:before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+.switch input:checked + .slider {
+  background: var(--button-bg);
+}
+.switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Style dropdown items and hover effect */
+.dropdown-menu .dropdown-item {
+  display: block;
+  margin: 4px 0;  /* vertical spacing only; horizontal inset from container padding */
+  padding: 8px 12px;
+  color: var(--link-color);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.dropdown-menu .dropdown-item:hover {
+  background-color: var(--link-hover-bg);
+  color: var(--link-hover-color);
+}
+
+/* Sidebar session title truncation and expansion */
+.sidebar-list a {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-list a.expanded {
+  white-space: normal;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--link-color);
+  font-size: 1rem;
+  margin-left: 4px;
+  padding: 0;
+}
+.expand-btn:hover {
+  color: var(--link-hover-color);
+}
+
+/* Sidebar list items layout */
+.sidebar-list li {
+  display: flex;
+  align-items: center;
+}
+.sidebar-list .session-link {
+  flex: 1;
+  margin-right: 4px;
+}
+.sidebar-list .expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 1rem;
+  padding: 0 4px;
+}
+.sidebar-list .expand-btn:hover {
+  color: var(--button-bg);
+}
+.sidebar-list .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 1rem;
+  padding: 0 4px;
+}
+.sidebar-list .delete-btn:hover {
+  color: red;
+}
+
+/* Position sidebar list items for context menus */
+.sidebar-list li {
+  position: relative;
+}
+/* Session context menu: appears under ellipsis button */
+.session-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--container-bg);
+  box-shadow: var(--container-shadow);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 4px 0;
+  display: none;
+  z-index: 1000;
+}
+.session-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--link-color);
+  font-size: 14px;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+.session-menu-item:hover {
+  background-color: var(--link-hover-bg);
+  color: var(--link-hover-color);
+}
+.session-menu-item.delete {
+  color: red;
+}
+.session-menu-item.delete:hover {
+  background-color: rgba(255,0,0,0.1);
+}
+
+/* Sidebar session context menu */
+.menu-btn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-color) !important;
+  font-size: 1.2rem;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.menu-btn:hover {
+  color: var(--button-bg) !important;
+}
+.session-menu-item {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-color) !important;
+  padding: 8px 12px !important;
+  border-radius: 0 !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.session-menu-item:hover {
+  background-color: var(--link-hover-bg) !important;
+  color: var(--link-hover-color) !important;
+}
+.session-menu-item.delete:hover {
+  background-color: rgba(255,0,0,0.1) !important;
+  color: red !important;
+}
+.session-menu form {
+  margin: 0;
+}
+
+/* Remove default button backgrounds and focus outlines for context menu */
+.menu-btn, .session-menu-item {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.menu-btn:focus, .session-menu-item:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* SVG icons inherit current text color */
+.session-menu-item svg {
+  fill: currentColor;
+  margin-right: 8px;
 }
 

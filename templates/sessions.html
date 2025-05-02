@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizPro — My Sessions</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon/favicon.ico') }}">
+</head>
+<body>
+  <div class="menu-bar-wrapper">
+    <div class="menu-bar">
+      <button id="themeToggle" class="theme-toggle" type="button" title="Toggle light/dark mode">🌓</button>
+      <a href="{{ url_for('setup') }}" class="btn back-btn">New Quiz</a>
+      <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2 class="header">My Quiz Sessions</h2>
+      {% if sessions %}
+        <ul class="list-group">
+          {% for s in sessions %}
+            <li class="list-group-item">
+              <div><strong>{{ s.title }}</strong> — {{ s.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+              <div>Status: {{ s.status }} | Score: {{ s.correct }}/{{ s.total }}</div>
+              <a href="{{ url_for('resume_session', session_id=s.id) }}" class="btn">Resume</a>
+              <form method="POST" action="{{ url_for('delete_session', session_id=s.id) }}" style="display:inline">
+                <button type="submit" class="btn btn-danger">Delete</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No previous sessions found.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const toggle = document.getElementById('themeToggle');
+      const root = document.documentElement;
+      const current = localStorage.getItem('theme') || 'light';
+      if (current === 'dark') root.classList.add('dark');
+      toggle.addEventListener('click', () => {
+        root.classList.toggle('dark');
+        localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+      });
+    })();
+  </script>
+</body>
+</html> 

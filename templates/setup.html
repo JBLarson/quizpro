@@ -83,6 +83,23 @@
 							<option value="gemini">Gemini</option>
 						</select>
 
+						<!-- Question Type and Count Selection -->
+						<div class="form-group">
+							<label for="questionType">Question Type:</label>
+							<select id="questionType" name="questionType" class="form-control" required>
+								<option value="multiple_choice" selected>Multiple-Choice</option>
+								<option value="free_response">Free-Response</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="numQuestions">Number of Questions:</label>
+							<select id="numQuestions" name="numQuestions" class="form-control" required>
+								{% for n in range(5, 51, 5) %}
+								<option value="{{ n }}" {% if n == 20 %}selected{% endif %}>{{ n }}</option>
+								{% endfor %}
+							</select>
+						</div>
+
 						<!-- Upload PPTX Section -->
 						<div class="form-group">
 							<!-- Drag & Drop Multi-File Upload: support up to 5 files -->

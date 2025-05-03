@@ -34,26 +34,34 @@
     <p>You answered {{ total_answered }} questions and got {{ total_answered - wrong_count }} correct ({{ 100 - percent_wrong }}%).</p>
     <!-- Detailed list of each question, user answer, and correct answer -->
     <ul>
-      {% for q, a in zip(questions, answers) %}
+      {% for q, a, ev in zip(questions, answers, evaluations) %}
         <li>
           <strong>{{ q.prompt }}</strong><br>
-          <!-- Options list highlighting user choice and correct answer -->
-          <ul class="options-list">
-            {% for letter, text in q.options.items() %}
-              <li{% if letter == a %} class="user-choice"{% endif %}{% if letter == q.correct_answer %} class="correct-choice"{% endif %}>
-                {{ letter }}) {{ text }}
-              </li>
-            {% endfor %}
-          </ul>
-          <!-- User's selected answer -->
-          <div>Your answer: <strong>{{ a }}) {{ q.options[a] if q.options[a] else '' }}</strong></div>
-          <!-- Correct answer -->
-          <div>Correct answer: <strong>{{ q.correct_answer }}) {{ q.options[q.correct_answer] }}</strong></div>
-          <!-- Feedback message -->
-          {% if a == q.correct_answer %}
-            <div class="result correct">Correct!</div>
+          {% if q.options %}
+            <!-- Multiple-Choice Options -->
+            <ul class="options-list">
+              {% for letter, text in q.options.items() %}
+                <li{% if letter == a %} class="user-choice"{% endif %}{% if letter == q.correct_answer %} class="correct-choice"{% endif %}>
+                  {{ letter }}) {{ text }}
+                </li>
+              {% endfor %}
+            </ul>
+            <div>Your answer: <strong>{{ a }}) {{ q.options[a] if q.options[a] else '' }}</strong></div>
+            <div>Correct answer: <strong>{{ q.correct_answer }}) {{ q.options[q.correct_answer] }}</strong></div>
+            {% if a == q.correct_answer %}
+              <div class="result correct">Correct!</div>
+            {% else %}
+              <div class="result incorrect">Incorrect</div>
+            {% endif %}
           {% else %}
-            <div class="result incorrect">Incorrect</div>
+            <!-- Free-Response Display -->
+            <div>Your answer: <strong>{{ q.user_answer }}</strong></div>
+            <div>Correct answer: <strong>{{ q.correct_answer }}</strong></div>
+            <!-- AI Evaluation -->
+            <div class="result {{ ev.status|lower().replace(' ', '-') }}">{{ ev.status }}</div>
+            {% if ev.explanation %}
+              <div class="explanation">{{ ev.explanation }}</div>
+            {% endif %}
           {% endif %}
         </li>
       {% endfor %}

@@ -71,6 +71,8 @@ class QuizSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     session_type = db.Column(db.String(20), nullable=False, default='quiz')  # 'quiz' or 'chat'
+    question_type = db.Column(db.String(20), nullable=False, default='multiple_choice')  # 'multiple_choice' or 'free_response'
+    num_questions = db.Column(db.Integer, nullable=False, default=20)
     title = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(20), nullable=False, default='in_progress')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -96,8 +98,8 @@ class QuizQuestion(db.Model):
     question_index = db.Column(db.Integer, nullable=False)
     prompt = db.Column(db.Text, nullable=False)
     options = db.Column(db.JSON, nullable=False)
-    correct_answer = db.Column(db.String(1), nullable=False)
-    user_answer = db.Column(db.String(1))
+    correct_answer = db.Column(db.Text, nullable=False)
+    user_answer = db.Column(db.Text)
     answered_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

@@ -199,6 +199,12 @@ def setup():
         })
 
     if request.method == 'POST':
+        # Get question type and number of questions from the form
+        question_type = request.form.get('questionType', 'multiple_choice')
+        try:
+            num_questions = int(request.form.get('numQuestions', 20))
+        except (TypeError, ValueError):
+            num_questions = 20
         selected_model = 'gemini'
         # Use form API key input or fallback to stored
         api_key = request.form.get('apiKey') or keys['gemini']
@@ -250,14 +256,25 @@ def setup():
             return render_template('setup.html', keys=keys, sessions=sessions_stats)
         content_str = '\n\n'.join(content_parts)
         # Prompt LLM: ask for a title, then the questions
-        prompt = (
-            "Give your quiz a concise, professional, and studious title that clearly references the subject matter being studied on the first line prefixed with 'Title: '. "
-            f"Then list exactly 20 multiple-choice quiz questions based solely on the following content: {content_str}. "
-            "Do not include any other text before the title or questions. "
-            "Start the questions directly with numbering (e.g., '1.'). "
-            "For each question, provide four options labeled A, B, C, D, then 'Answer: X' where X is the correct option. "
-            "Separate each question with <|Q|>."
-        )
+        # Build dynamic prompt based on question type and count
+        if question_type == 'multiple_choice':
+            prompt = (
+                "Give your quiz a concise, professional, and studious title that clearly references the subject matter being studied on the first line prefixed with 'Title: '. "
+                f"Then list exactly {num_questions} multiple-choice quiz questions based solely on the following content: {content_str}. "
+                "Do not include any other text before the title or questions. "
+                "Start the questions directly with numbering (e.g., '1.'). "
+                "For each question, provide four options labeled A, B, C, D, then 'Answer: X' where X is the correct option. "
+                "Separate each question with <|Q|>."
+            )
+        else:
+            prompt = (
+                "Give your quiz a concise, professional, and studious title that clearly references the subject matter being studied on the first line prefixed with 'Title: '. "
+                f"Then list exactly {num_questions} free-response quiz questions based solely on the following content: {content_str}. "
+                "Do not include any other text before the title or questions. "
+                "Start each question directly with numbering (e.g., '1.') on its own line. "
+                "After each question, on a new line prefix 'Answer: ' followed by the complete answer. "
+                "Separate each question with <|Q|>."
+            )
         # Generate questions and parse to structured dicts
         questions = generate_questions(api_key, 'gemini', prompt)
         print("[DEBUG] raw quiz string:", questions)
@@ -280,23 +297,36 @@ def setup():
             lines = [l.strip() for l in item.splitlines() if l.strip()]
             if not lines:
                 continue
-            # Remove leading numbering (e.g., '1.')
             question_text = re.sub(r'^\d+\.\s*', '', lines[0])
-            options = {}
-            correct = None
-            for line in lines[1:]:
-                m = re.match(r'^([A-D])[\)\.\:]\s*(.*)', line)
-                if m:
-                    options[m.group(1)] = m.group(2).strip()
-                    continue
-                m2 = re.search(r'Answer[:\s]*([A-D])', line, re.IGNORECASE)
-                if m2:
-                    correct = m2.group(1)
-            # Only keep entries with a valid correct answer and exactly 4 options
-            if correct and len(options) == 4:
-                parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
+            if question_type == 'multiple_choice':
+                options = {}
+                correct = None
+                for line in lines[1:]:
+                    m = re.match(r'^([A-D])[\)\.:]\s*(.*)', line)
+                    if m:
+                        options[m.group(1)] = m.group(2).strip()
+                        continue
+                    m2 = re.search(r'Answer[:\s]*([A-D])', line, re.IGNORECASE)
+                    if m2:
+                        correct = m2.group(1)
+                if correct and len(options) == 4:
+                    parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
+            else:
+                answer = ''
+                for line in lines[1:]:
+                    m2 = re.match(r'^Answer[:\s]*(.*)', line, re.IGNORECASE)
+                    if m2:
+                        answer = m2.group(1).strip()
+                        break
+                if answer:
+                    parsed_qs.append({'prompt': question_text, 'options': {}, 'answer': answer})
         # Persist a new quiz session and its questions
-        new_session = QuizSession(user_id=current_user.id, session_type='quiz')
+        new_session = QuizSession(
+            user_id=current_user.id,
+            session_type='quiz',
+            question_type=question_type,
+            num_questions=num_questions
+        )
         # Save extracted title if present
         if title:
             new_session.title = title
@@ -398,10 +428,23 @@ def results():
     wrong_count = sum(1 for q in qs if q.user_answer != q.correct_answer)
     percent_wrong = int((wrong_count / total_answered) * 100) if total_answered else 0
     incorrect = wrong_count > 0
+    # Evaluate free-response answers via AI
+    # Fetch user's API key
+    gemini_record = ApiKey.query.filter_by(user_id=current_user.id, model='gemini').first()
+    api_key = gemini_record.key if gemini_record else None
+    evaluations = []
+    for q in qs:
+        if not q.options:
+            # free-response: evaluate
+            ev = evaluate_answer(api_key, 'gemini', q.prompt, q.user_answer or '', q.correct_answer)
+        else:
+            ev = None
+        evaluations.append(ev)
     return render_template('results.html',
                            title=title,
                            questions=qs,
                            answers=ans,
+                           evaluations=evaluations,
                            incorrect=incorrect,
                            wrong_count=wrong_count,
                            total_answered=total_answered,
@@ -427,8 +470,14 @@ def retry_incorrect():
     if not wrong_qs:
         flash('No incorrect questions to retry.', 'info')
         return redirect(url_for('results'))
-    # Create new quiz session
-    new_session = QuizSession(user_id=current_user.id, session_type='quiz')
+    # Create new quiz session preserving type and count based on wrong questions
+    orig = QuizSession.query.get(session_id)
+    new_session = QuizSession(
+        user_id=current_user.id,
+        session_type='quiz',
+        question_type=orig.question_type,
+        num_questions=len(wrong_qs)
+    )
     db.session.add(new_session)
     db.session.commit()
     # Persist only wrong questions to new session
@@ -500,6 +549,52 @@ def generate_questions(api_key, model_name, prompt):
 
 
 # --------------------------------
+# Helper: evaluate free-response answers via AI model
+# --------------------------------
+def evaluate_answer(api_key, model_name, question_text, user_ans, correct_ans):
+    """
+    Use AI to judge a free-response answer against the correct answer.
+    Returns a dict with 'status' (Correct/Partially Correct/Incorrect) and 'explanation'.
+    """
+    if not api_key:
+        return {'status': 'Error', 'explanation': 'No API key.'}
+    client = genai.Client(api_key=api_key)
+    # Build evaluation prompt
+    eval_prompt = (
+        f"Here is a quiz question: \"{question_text}\". "
+        f"The correct answer is: \"{correct_ans}\". "
+        f"The student's answer is: \"{user_ans}\". "
+        "Assess if the student's answer demonstrates understanding of the topic. "
+        "Respond in the exact format:\nStatus: <Correct|Partially Correct|Incorrect>\nExplanation: <brief reasoning>."
+    )
+    try:
+        response = client.models.generate_content(
+            model=f"{model_name}-2.0-flash",
+            contents=[{"text": eval_prompt}],
+            config={"temperature": 0.0, "max_output_tokens": 256}
+        )
+    except Exception as e:
+        print(f"[ERROR] Evaluation API call failed: {e}")
+        return {'status': 'Error', 'explanation': 'Evaluation call failed.'}
+    # Extract text
+    raw = ""
+    if response and getattr(response, 'candidates', None):
+        parts = response.candidates[0].content.parts or []
+        raw = "".join(part.text or "" for part in parts)
+    # Parse Status and Explanation
+    status = ''
+    explanation = ''
+    for line in raw.splitlines():
+        if line.lower().startswith('status:'):
+            status = line.split(':',1)[1].strip()
+        elif line.lower().startswith('explanation:'):
+            explanation = line.split(':',1)[1].strip()
+    if not status:
+        status = 'Error'
+    return {'status': status, 'explanation': explanation}
+
+
+# --------------------------------
 # Adaptive Follow-up Route: generate new questions on incorrect topics
 # --------------------------------
 @app.route('/adaptive_followup', methods=['POST'])
@@ -558,7 +653,12 @@ def adaptive_followup():
         flash('No follow-up questions generated. Please try again.', 'error')
         return redirect(url_for('results'))
     # Create new quiz session for follow-ups
-    new_session = QuizSession(user_id=current_user.id, session_type='quiz')
+    new_session = QuizSession(
+        user_id=current_user.id,
+        session_type='quiz',
+        question_type='multiple_choice',
+        num_questions=len(followups)
+    )
     db.session.add(new_session)
     db.session.commit()
     for idx, f in enumerate(followups):

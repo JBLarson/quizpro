@@ -41,12 +41,19 @@
       </div>
       <!-- Answer form: radio options and Next button -->
       <form method="POST">
-        {% for letter, text in question.options.items() %}
-          <div class="form-group option">
-            <input class="form-control" type="radio" id="opt{{ letter }}" name="answer" value="{{ letter }}" required>
-            <label for="opt{{ letter }}">{{ letter }}) {{ text }}</label>
+        {% if question.options %}
+          {% for letter, text in question.options.items() %}
+            <div class="form-group option">
+              <input class="form-control" type="radio" id="opt{{ letter }}" name="answer" value="{{ letter }}" required>
+              <label for="opt{{ letter }}">{{ letter }}) {{ text }}</label>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="form-group">
+            <label for="answer">Your Answer:</label>
+            <textarea class="form-control" id="answer" name="answer" rows="4" required placeholder="Type your answer here..."></textarea>
           </div>
-        {% endfor %}
+        {% endif %}
         <button type="submit" class="btn">Next</button>
       </form>
     </div> <!-- end card -->

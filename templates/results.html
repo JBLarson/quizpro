@@ -32,42 +32,56 @@
     <!-- Summary Header: overall score and percentage -->
     <h3>All Done!</h3>
     <p>You answered {{ total_answered }} questions and got {{ total_answered - wrong_count }} correct ({{ 100 - percent_wrong }}%).</p>
-    <!-- Detailed list of each question, user answer, and correct answer -->
-    <ul>
+    <!-- Detailed questions breakdown -->
+    <div class="results-list">
       {% for q, a, ev in zip(questions, answers, evaluations) %}
-        <li>
-          <strong>{{ q.prompt }}</strong><br>
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-index">Question {{ loop.index }} of {{ total_answered }}</span>
+            {% if q.options %}
+              {% if a == q.correct_answer %}
+                <span class="badge correct">Correct</span>
+              {% else %}
+                <span class="badge incorrect">Incorrect</span>
+              {% endif %}
+            {% else %}
+              <span class="badge {{ ev.status|lower|replace(' ', '-') }}">{{ ev.status }}</span>
+            {% endif %}
+          </div>
+          <p class="question-text">{{ q.prompt }}</p>
           {% if q.options %}
-            <!-- Multiple-Choice Options -->
             <ul class="options-list">
               {% for letter, text in q.options.items() %}
-                <li{% if letter == a %} class="user-choice"{% endif %}{% if letter == q.correct_answer %} class="correct-choice"{% endif %}>
-                  {{ letter }}) {{ text }}
+                <li class="
+                  {% if letter == q.correct_answer %}correct-option{% endif %}
+                  {% if letter == a and letter != q.correct_answer %}user-option{% endif %}
+                ">
+                  <strong>{{ letter }})</strong> {{ text }}
                 </li>
               {% endfor %}
             </ul>
-            <div>Your answer: <strong>{{ a }}) {{ q.options[a] if q.options[a] else '' }}</strong></div>
-            <div>Correct answer: <strong>{{ q.correct_answer }}) {{ q.options[q.correct_answer] }}</strong></div>
-            {% if a == q.correct_answer %}
-              <div class="result correct">Correct!</div>
-            {% else %}
-              <div class="result incorrect">Incorrect</div>
-            {% endif %}
-          {% else %}
-            <!-- Free-Response Display -->
-            <div>Your answer: <strong>{{ q.user_answer }}</strong></div>
-            <div>Correct answer: <strong>{{ q.correct_answer }}</strong></div>
-            <!-- AI Evaluation -->
-            <div class="result {{ ev.status|lower().replace(' ', '-') }}">{{ ev.status }}</div>
-            {% if ev.explanation %}
-              <div class="explanation">{{ ev.explanation }}</div>
-            {% endif %}
           {% endif %}
-        </li>
+          <div class="answer-details">
+            {% if q.options %}
+              <p><strong>Your answer:</strong> {{ a }}) {{ q.options[a] }}</p>
+              <p><strong>Correct answer:</strong> {{ q.correct_answer }}) {{ q.options[q.correct_answer] }}</p>
+            {% else %}
+              <p><strong>Your answer:</strong> {{ q.user_answer }}</p>
+              <p><strong>Correct answer:</strong> {{ q.correct_answer }}</p>
+              {% if ev and ev.explanation %}
+                <p class="explanation"><em>{{ ev.explanation }}</em></p>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
       {% endfor %}
-    </ul>
-    <!-- Action buttons: retry incorrect, similar topic quiz, or new quiz -->
+    </div>
+    <!-- Action buttons: retry incorrect, similar topic quiz, or setup -->
     <div class="results-actions">
+      <!-- Retry the same quiz questions with shuffled options -->
+      <form action="{{ url_for('retry_same') }}" method="post" style="display:inline">
+        <button type="submit" class="btn">Retry Same Questions</button>
+      </form>
       {% if incorrect %}
         <form action="{{ url_for('retry_incorrect') }}" method="post" style="display:inline">
           <button type="submit">Retry Incorrect</button>
@@ -77,7 +91,7 @@
         </form>
       {% endif %}
       <form action="{{ url_for('setup') }}" method="get" style="display:inline; margin-left:8px;">
-        <button type="submit">Run Another Quiz</button>
+        <button type="submit" class="btn">Back to Setup</button>
       </form>
     </div>
     <!-- Dropdown toggle script -->

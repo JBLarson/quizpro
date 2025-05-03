@@ -25,6 +25,7 @@ from .parser_pdf_text import pdf_to_text  # PDF parsing utility
 from .parser_docx_text import docx_to_text  # DOCX parsing utility
 from .parser_xlsx_text import xlsx_to_text  # XLSX parsing utility
 import google.genai as genai  # Google GenAI SDK for Gemini
+import random
 
 # --------------------------------
 # Environment & App Initialization
@@ -261,8 +262,9 @@ def setup():
             prompt = (
                 "Give your quiz a concise, professional, and studious title that clearly references the subject matter being studied on the first line prefixed with 'Title: '. "
                 f"Then list exactly {num_questions} multiple-choice quiz questions based solely on the following content: {content_str}. "
+                "Ensure the correct answer is not always in the same position and that distractors are plausible, covering common misconceptions. "
                 "Do not include any other text before the title or questions. "
-                "Start the questions directly with numbering (e.g., '1.'). "
+                "Start each question directly with numbering (e.g., '1.'). "
                 "For each question, provide four options labeled A, B, C, D, then 'Answer: X' where X is the correct option. "
                 "Separate each question with <|Q|>."
             )
@@ -320,6 +322,21 @@ def setup():
                         break
                 if answer:
                     parsed_qs.append({'prompt': question_text, 'options': {}, 'answer': answer})
+        # Shuffle MC options so initial sessions have varied order
+        if question_type == 'multiple_choice':
+            import random
+            for qst in parsed_qs:
+                items = list(qst['options'].items())
+                random.shuffle(items)
+                opt_map = {}
+                ans_map = None
+                for i, (old_letter, text) in enumerate(items):
+                    letter = chr(ord('A') + i)
+                    opt_map[letter] = text
+                    if old_letter == qst['answer']:
+                        ans_map = letter
+                qst['options'] = opt_map
+                qst['answer'] = ans_map
         # Persist a new quiz session and its questions
         new_session = QuizSession(
             user_id=current_user.id,
@@ -494,6 +511,62 @@ def retry_incorrect():
     # Reset session tracking
     session.pop('quiz_session_id', None)
     session.pop('current_question_index', None)
+    session['quiz_session_id'] = new_session.id
+    session['current_question_index'] = 0
+    return redirect(url_for('chat'))
+
+
+# --------------------------------
+# Retry Same Quiz Route: retake all questions with shuffled options
+@app.route('/retry_same', methods=['POST'])
+@login_required
+def retry_same():
+    """
+    Create a new quiz session with the same questions (shuffled options for MC).
+    """
+    session_id = session.get('quiz_session_id')
+    if not session_id:
+        flash('No active quiz session to retry.', 'info')
+        return redirect(url_for('setup'))
+    orig = QuizSession.query.get(session_id)
+    # Load all questions from original session
+    all_qs = QuizQuestion.query.filter_by(session_id=session_id).order_by(QuizQuestion.question_index).all()
+    # Create new session copying type/count/title
+    new_session = QuizSession(
+        user_id=current_user.id,
+        session_type=orig.session_type,
+        question_type=orig.question_type,
+        num_questions=orig.num_questions,
+        title=orig.title
+    )
+    db.session.add(new_session)
+    db.session.commit()
+    # Clone and (if MC) shuffle options
+    for q in all_qs:
+        if q.options:
+            items = list(q.options.items())
+            # identify correct text
+            correct_text = q.options.get(q.correct_answer)
+            random.shuffle(items)
+            new_opts = {}
+            new_correct = None
+            for idx, (_, text) in enumerate(items):
+                letter = chr(ord('A') + idx)
+                new_opts[letter] = text
+                if text == correct_text:
+                    new_correct = letter
+        else:
+            new_opts = {}
+            new_correct = q.correct_answer
+        new_q = QuizQuestion(
+            session_id=new_session.id,
+            question_index=q.question_index,
+            prompt=q.prompt,
+            options=new_opts,
+            correct_answer=new_correct
+        )
+        db.session.add(new_q)
+    db.session.commit()
     session['quiz_session_id'] = new_session.id
     session['current_question_index'] = 0
     return redirect(url_for('chat'))

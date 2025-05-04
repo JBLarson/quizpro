@@ -322,9 +322,24 @@
 				});
 			});
 		});
-		// Slider display update
+		// Slider display update and fill background
 		const slider = document.getElementById('numQuestions');
-		slider.addEventListener('input', e => document.getElementById('countDisplay').textContent = e.target.value);
+		const countDisplay = document.getElementById('countDisplay');
+		function updateSliderBackground() {
+			const min = Number(slider.min);
+			const max = Number(slider.max);
+			const val = Number(slider.value);
+			const percentage = ((val - min) / (max - min)) * 100;
+			slider.style.background = `linear-gradient(to right, var(--button-bg) ${percentage}%, var(--input-border) ${percentage}%)`;
+		}
+		// Initialize display and background
+		countDisplay.textContent = slider.value;
+		updateSliderBackground();
+		// Update on input
+		slider.addEventListener('input', (e) => {
+			countDisplay.textContent = e.target.value;
+			updateSliderBackground();
+		});
 		// File attach and chips
 		const uploadBtn = document.getElementById('uploadBtn');
 		const fileInput = document.getElementById('fileInput');

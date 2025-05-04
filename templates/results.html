@@ -83,13 +83,14 @@
         <button type="submit" class="btn">Retry Same Questions</button>
       </form>
       {% if incorrect %}
-        <form action="{{ url_for('retry_incorrect') }}" method="post" style="display:inline">
+        <form action="{{ url_for('retry_incorrect') }}" method="post" style="display:inline; margin-left:8px;">
           <button type="submit">Retry Incorrect</button>
         </form>
-        <form action="{{ url_for('adaptive_followup') }}" method="post" style="display:inline; margin-left:8px;">
-          <button type="submit">Similar Topic Quiz</button>
-        </form>
       {% endif %}
+      <!-- Always offer a similar-topic follow-up quiz -->
+      <form action="{{ url_for('adaptive_followup') }}" method="post" style="display:inline; margin-left:8px;">
+        <button type="submit">Similar Topic Quiz</button>
+      </form>
       <form action="{{ url_for('setup') }}" method="get" style="display:inline; margin-left:8px;">
         <button type="submit" class="btn">Back to Setup</button>
       </form>

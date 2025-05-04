@@ -263,22 +263,19 @@ def setup():
         # Build dynamic prompt based on question type and count
         if question_type == 'multiple_choice':
             prompt = (
-                "Give your quiz a concise, professional, and studious title that clearly references the subject matter being studied on the first line prefixed with 'Title: '. "
-                f"Then list exactly {num_questions} multiple-choice quiz questions based solely on the following content: {content_str}. "
-                "Ensure the correct answer is not always in the same position and that distractors are plausible, covering common misconceptions. "
-                "Do not include any other text before the title or questions. "
-                "Start each question directly with numbering (e.g., '1.'). "
-                "For each question, provide four options labeled A, B, C, D, then 'Answer: X' where X is the correct option. "
-                "Separate each question with <|Q|>."
+                "Give your quiz a concise, professional title on the first line starting with 'Title: '. "
+                f"Then list exactly {num_questions} multiple-choice questions from this content: {content_str}. "
+                "For each question, format exactly like this: '\n1. Question text\nA) Option A\nB) Option B\nC) Option C\nD) Option D\nAnswer: X<|Q|>'. "
+                "Use that exact template, include <|Q|> after each question (including the last), and ensure only those texts appear."
             )
         else:
             prompt = (
                 "Give your quiz a concise, professional, and studious title that clearly references the subject matter being studied on the first line prefixed with 'Title: '. "
                 f"Then list exactly {num_questions} free-response quiz questions based solely on the following content: {content_str}. "
                 "Do not include any other text before the title or questions. "
-                "Start each question directly with numbering (e.g., '1.') on its own line. "
-                "After each question, on a new line prefix 'Answer: ' followed by the complete answer. "
-                "Separate each question with <|Q|>."
+                "Start each question directly with its number (e.g., '1.') on its own line, followed by the question text. "
+                "After each question, on a new line prefix 'Answer: ' followed by the complete answer, then end the question with '<|Q|>'. "
+                "Include '<|Q|>' after the final question so splitting yields exactly {num_questions} items."
             )
         # Generate questions and parse to structured dicts
         questions = generate_questions(api_key, selected_model, prompt)
@@ -300,6 +297,8 @@ def setup():
                                    num_questions=num_questions)
         raw_items = questions_body.split('<|Q|>')
         parsed_qs = []
+        # Debug: show parsed question count
+        print(f"[DEBUG] parsed_qs length after parsing: {len(parsed_qs)}, expected: {num_questions}")
         for item in raw_items:
             lines = [l.strip() for l in item.splitlines() if l.strip()]
             if not lines:
@@ -318,6 +317,9 @@ def setup():
                         correct = m2.group(1)
                 if correct and len(options) == 4:
                     parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
+                else:
+                    # fallback: no valid MC options, treat as text-only question
+                    parsed_qs.append({'prompt': question_text, 'options': {}, 'answer': ''})
             else:
                 answer = ''
                 for line in lines[1:]:
@@ -327,6 +329,16 @@ def setup():
                         break
                 if answer:
                     parsed_qs.append({'prompt': question_text, 'options': {}, 'answer': answer})
+        # validate parsed question count
+        if len(parsed_qs) == 0:
+            flash("No valid questions parsed. Please try again.", "error")
+            return render_template('setup.html', sessions=sessions_stats,
+                                   selected_model=selected_model,
+                                   question_type=question_type,
+                                   num_questions=num_questions,
+                                   pastedText=pasted_text)
+        elif len(parsed_qs) != num_questions:
+            flash(f"Parsed {len(parsed_qs)} questions but requested {num_questions}. Proceeding with {len(parsed_qs)}.", "warning")
         # Shuffle MC options so initial sessions have varied order
         if question_type == 'multiple_choice':
             import random
@@ -614,7 +626,7 @@ def generate_questions(api_key, model_name, prompt):
         response = client.models.generate_content(
             model=f"{model_name}-2.0-flash",
             contents=[{"text": prompt}],
-            config={"temperature": 0.2, "max_output_tokens": 512}
+            config={"temperature": 0.2, "max_output_tokens": 2048}
         )
     except Exception as e:
         # Handle API errors (e.g., model overload) and other exceptions
@@ -697,12 +709,15 @@ def adaptive_followup():
     if not wrong_qs:
         flash('No incorrect questions to generate follow-ups.', 'info')
         return redirect(url_for('results'))
+    # Retrieve original quiz count for adaptive follow-up length
+    orig_session = QuizSession.query.get(session_id)
+    orig_count = orig_session.num_questions if orig_session else len(wrong_qs)
     # Build AI prompt list
     import re
     payload_prompts = "\n".join([f"{i+1}. {re.sub(r'^\d+\.\s*', '', q.prompt)}" for i, q in enumerate(wrong_qs)])
     prompt_text = (
         f"Here are the questions you answered incorrectly:\n{payload_prompts}\n"
-        "Please generate 10 new multiple-choice questions on these same topics, phrased differently. "
+        f"Please generate {orig_count} new multiple-choice questions on these same topics, phrased differently. "
         "Provide four options labeled A, B, C, D, then 'Answer: X' for the correct option. "
         "Separate each question with <|Q|> and start immediately without any extra text."
     )

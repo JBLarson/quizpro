@@ -1069,23 +1069,41 @@ html.dark .upload-btn {
 
 /* --- Setup Page Layout Overrides --- */
 .page-layout .main-content.setup-page {
-  /* only vertical spacing; horizontal gutters via container centering */
-  padding: 16px 0 !important;
+  /* vertical spacing and horizontal gutters */
+  padding: 16px 48px 16px 16px !important;
 }
 .page-layout .main-content.setup-page > .container {
-  /* dynamic responsive width: 90% of viewport, capped */
-  width: 90% !important;
-  max-width: 800px !important;
-  margin: 0 auto !important;
   padding: 0 !important;
-  box-sizing: border-box !important;
 }
 .page-layout .main-content.setup-page .card {
-  /* fill the container width and keep bottom spacing */
+  box-sizing: border-box !important;
+  /* single white box for setup content */
   width: 100% !important;
   margin: 0 0 24px !important;
+  padding: 32px !important;
+  background: var(--container-bg) !important;
+  box-shadow: var(--container-shadow) !important;
+  border-radius: 8px !important;
+}
+.page-layout .main-content.setup-page .card > h2,
+.page-layout .main-content.setup-page .card > form {
+  max-width: 600px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 /* --- End Setup Page Layout Overrides --- */
+
+/* ================================================ */
+
+.results-actions button {
+  background: var(--button-disabled-bg) !important;
+  color: var(--button-color) !important;
+  border: none !important;
+  cursor: pointer;
+}
+.results-actions button:hover {
+  filter: brightness(0.9) !important;
+}
 
 /* ================================================ */
 

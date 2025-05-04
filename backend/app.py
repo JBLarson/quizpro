@@ -37,6 +37,10 @@ print(f"[DEBUG] Database URI: {os.getenv('DATABASE_URL')}")
 
 # Create Flask app, pointing to static files and Jinja2 templates
 app = Flask(__name__, static_folder='../static', template_folder='../templates')
+# Hardcoded API keys for models (loaded from env or defaults)
+app.config['GEMINI_API_KEY'] = os.getenv('GEMINI_API_KEY', '')
+app.config['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY', '')
+app.config['DEEPSEEK_API_KEY'] = os.getenv('DEEPSEEK_API_KEY', '')
 # Make Python's built-in zip() available in templates (e.g., pairing arrays)
 app.jinja_env.globals.update(zip=zip)
 
@@ -177,10 +181,6 @@ def setup():
     - GET  -> render setup template with existing API key
     - POST -> handle PPTX upload or pasted text, build prompt, generate questions via LLM
     """
-    # Fetch stored Gemini API key for current user
-    gemini_record = ApiKey.query.filter_by(user_id=current_user.id, model='gemini').first()
-    keys = {'gemini': gemini_record.key if gemini_record else ''}
-
     # Build session history for sidebar
     user_sessions = QuizSession.query.filter_by(user_id=current_user.id) \
         .order_by(QuizSession.created_at.desc()).all()
@@ -198,63 +198,66 @@ def setup():
             'total': total,
             'correct': correct
         })
+    # Default selectors for GET
+    selected_model = 'gemini'
+    question_type = 'multiple_choice'
+    num_questions = 20
 
     if request.method == 'POST':
-        # Get question type and number of questions from the form
+        # Read selected LLM model
+        selected_model = request.form.get('modelSelect', 'gemini')
+        # Get API key from server config
+        if selected_model == 'gemini':
+            api_key = app.config['GEMINI_API_KEY']
+        elif selected_model == 'openai':
+            api_key = app.config['OPENAI_API_KEY']
+        elif selected_model == 'deepseek':
+            api_key = app.config['DEEPSEEK_API_KEY']
+        else:
+            api_key = None
+        # Quiz options
         question_type = request.form.get('questionType', 'multiple_choice')
         try:
             num_questions = int(request.form.get('numQuestions', 20))
         except (TypeError, ValueError):
             num_questions = 20
-        selected_model = 'gemini'
-        # Use form API key input or fallback to stored
-        api_key = request.form.get('apiKey') or keys['gemini']
-        # Persist API key in database
-        if api_key:
-            if gemini_record:
-                gemini_record.key = api_key
-            else:
-                gemini_record = ApiKey(user_id=current_user.id, model='gemini', key=api_key)
-                db.session.add(gemini_record)
-            db.session.commit()
-            keys['gemini'] = api_key
-        # Retrieve content inputs and combine uploaded file text or pasted text
-        content_file = request.files.get('contentFile')
+        # Retrieve multiple file uploads and pasted text
+        content_files = request.files.getlist('contentFiles') or []
         pasted_text = (request.form.get('pastedText') or '').strip()
         content_parts = []
-        # If a file was uploaded, detect type and extract text
-        if content_file and content_file.filename:
-            filename = content_file.filename.lower()
-            if filename.endswith('.pptx'):
-                slides_data = pptx_to_json(content_file)
-                import re
-                filtered_slides = []
-                for slide in slides_data.get('slides', [])[1:]:
-                    lines = [line for line in slide.get('text', []) if len(line.split()) > 3 or re.search(r"\b\d{4}\b", line)]
-                    if lines:
-                        filtered_slides.append(' '.join(lines))
-                content_parts.append('\n\n'.join(filtered_slides))
-            elif filename.endswith('.pdf'):
-                text = pdf_to_text(content_file)
-                content_parts.append(text)
-            elif filename.endswith('.docx'):
-                text = docx_to_text(content_file)
-                content_parts.append(text)
-            elif filename.endswith('.xlsx'):
-                text = xlsx_to_text(content_file)
-                content_parts.append(text)
-            else:
-                # Treat other uploads (e.g., .txt) as plain text
-                content_file.seek(0)
-                text = content_file.read().decode('utf-8', errors='ignore')
-                content_parts.append(text)
-        # If the user pasted text, include it
+        import re
+        # Process up to 5 uploaded files
+        for content_file in content_files[:5]:
+            if content_file and content_file.filename:
+                filename = content_file.filename.lower()
+                if filename.endswith('.pptx'):
+                    slides_data = pptx_to_json(content_file)
+                    filtered_slides = []
+                    for slide in slides_data.get('slides', [])[1:]:
+                        lines = [line for line in slide.get('text', []) if len(line.split()) > 3 or re.search(r"\b\d{4}\b", line)]
+                        if lines:
+                            filtered_slides.append(' '.join(lines))
+                    if filtered_slides:
+                        content_parts.append('\n\n'.join(filtered_slides))
+                elif filename.endswith('.pdf'):
+                    content_parts.append(pdf_to_text(content_file))
+                elif filename.endswith('.docx'):
+                    content_parts.append(docx_to_text(content_file))
+                elif filename.endswith('.xlsx'):
+                    content_parts.append(xlsx_to_text(content_file))
+                else:
+                    content_file.seek(0)
+                    content_parts.append(content_file.read().decode('utf-8', errors='ignore'))
+        # Include pasted text
         if pasted_text:
             content_parts.append(pasted_text)
         # Ensure there is some content
         if not content_parts:
             flash("Please upload a file or paste some text.", "error")
-            return render_template('setup.html', keys=keys, sessions=sessions_stats)
+            return render_template('setup.html', sessions=sessions_stats,
+                                   selected_model=selected_model,
+                                   question_type=question_type,
+                                   num_questions=num_questions)
         content_str = '\n\n'.join(content_parts)
         # Prompt LLM: ask for a title, then the questions
         # Build dynamic prompt based on question type and count
@@ -278,7 +281,7 @@ def setup():
                 "Separate each question with <|Q|>."
             )
         # Generate questions and parse to structured dicts
-        questions = generate_questions(api_key, 'gemini', prompt)
+        questions = generate_questions(api_key, selected_model, prompt)
         print("[DEBUG] raw quiz string:", questions)
         # Attempt to extract a title line if AI provided one in the format "Title: ..."
         title = None
@@ -291,8 +294,10 @@ def setup():
             questions_body = questions
         if not questions_body:
             flash("Error generating questions. Please check the API configuration.", "error")
-            return render_template('setup.html', keys=keys, sessions=sessions_stats)
-        import re
+            return render_template('setup.html', sessions=sessions_stats,
+                                   selected_model=selected_model,
+                                   question_type=question_type,
+                                   num_questions=num_questions)
         raw_items = questions_body.split('<|Q|>')
         parsed_qs = []
         for item in raw_items:
@@ -367,8 +372,11 @@ def setup():
         session['current_question_index'] = 0
         return redirect(url_for('chat'))
 
-    # GET: render setup with stored key and sessions history
-    return render_template('setup.html', keys=keys, sessions=sessions_stats)
+    # GET: render setup with default selectors
+    return render_template('setup.html', sessions=sessions_stats,
+                           selected_model=selected_model,
+                           question_type=question_type,
+                           num_questions=num_questions)
 
 
 # --------------------------------

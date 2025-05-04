@@ -7,10 +7,16 @@
 	<title>Setup</title>
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 	<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon/favicon.ico') }}">
+	<!-- Font Awesome for file-type icons -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
 	<div class="menu-bar-wrapper">
 		<div class="menu-bar">
+			<!-- History sidebar toggle at top-left -->
+			<button id="sidebarToggleNav" class="sidebar-nav-toggle" title="Hide History">
+				<i class="fas fa-columns"></i>
+			</button>
 			<!-- Hamburger menu toggles theme dropdown -->
 			<button id="menuToggle" class="menu-toggle" title="Menu">☰</button>
 			<div id="dropdownMenu" class="dropdown-menu">
@@ -47,7 +53,7 @@
 				{% endfor %}
 			</ul>
 		</aside>
-		<main class="main-content">
+		<main class="main-content setup-page">
 			<!-- Flash messages -->
 			{% with messages = get_flashed_messages(with_categories=true) %}
 				{% if messages %}
@@ -61,97 +67,56 @@
 			<div class="container">
 				<!-- Main container for the setup card and form -->
 				<div class="card">
+					<!-- Drop overlay for entire setup card -->
+					<div class="drop-overlay" aria-hidden="true">
+						<div class="drop-content">
+							<div class="drop-icons"><span>📁</span><span>📝</span><span>🖼️</span></div>
+							<div class="drop-title">Add anything</div>
+							<div class="drop-subtitle">Drop any file here to add it to the conversation</div>
+						</div>
+					</div>
 					<h2 class="header">Setup Your Session</h2>
 
 					<form method="POST" action="{{ url_for('setup') }}" enctype="multipart/form-data">
 						<!-- Setup Form: submits API key, chosen model, PPTX file, and pasted text to backend -->
-						<!-- API Key Section -->
-						<div class="form-group">
-							<!-- API Key Input: enter or update the user's AI service key (Gemini) -->
-							<label for="apiKey">API Key:</label>
-							<div class="input-with-button">
-								<input class="form-control" type="text" id="apiKey" name="apiKey" placeholder="Enter API Key" required value="{{ keys.get('gemini', '') }}">
-								<button type="button" id="saveKeyBtn" class="btn">Save API Key</button>
-							</div>
-						</div>
+						<!-- API Key is now hardcoded on the server side; no user input required -->
 
-						<!-- LLM Model Selection -->
-						<h3>Select LLM Model</h3>
-						<!-- AI Model Selection: dropdown to pick which language model to use for question generation -->
-						<label for="modelSelect">Model:</label>
-						<select id="modelSelect" name="modelSelect" required>
-							<option value="gemini">Gemini</option>
-						</select>
+						<!-- LLM Model Selection as pills -->
+						<div class="form-group">
+							<label>Model:</label>
+							<div class="pill-group" data-target="modelSelectInput">
+								<button type="button" class="pill" data-value="gemini">Gemini</button>
+								<button type="button" class="pill" data-value="openai">OpenAI</button>
+								<button type="button" class="pill" data-value="deepseek">Deepseek</button>
+							</div>
+							<input type="hidden" id="modelSelectInput" name="modelSelect" value="{{ selected_model }}">
+						</div>
 
 						<!-- Question Type and Count Selection -->
 						<div class="form-group">
-							<label for="questionType">Question Type:</label>
-							<select id="questionType" name="questionType" class="form-control" required>
-								<option value="multiple_choice" selected>Multiple-Choice</option>
-								<option value="free_response">Free-Response</option>
-							</select>
+							<label>Question Type:</label>
+							<div class="pill-group" data-target="questionTypeInput">
+								<button type="button" class="pill" data-value="multiple_choice">Multiple-Choice</button>
+								<button type="button" class="pill" data-value="free_response">Free-Response</button>
+							</div>
+							<input type="hidden" id="questionTypeInput" name="questionType" value="{{ question_type }}">
 						</div>
 						<div class="form-group">
-							<label for="numQuestions">Number of Questions:</label>
-							<select id="numQuestions" name="numQuestions" class="form-control" required>
-								{% for n in range(5, 51, 5) %}
-								<option value="{{ n }}" {% if n == 20 %}selected{% endif %}>{{ n }}</option>
-								{% endfor %}
-							</select>
+							<label for="numQuestions">Number of Questions: <span id="countDisplay">{{ num_questions }}</span></label>
+							<input type="range" id="numQuestions" name="numQuestions" min="5" max="50" step="5" value="{{ num_questions }}">
 						</div>
 
-						<!-- Upload PPTX Section -->
-						<div class="form-group">
-							<!-- Drag & Drop Multi-File Upload: support up to 5 files -->
-							<label for="contentFile">Upload Content (up to 5 files):</label>
-							<div id="dropZone" class="drop-zone" style="border: 2px dashed var(--input-border); padding: 20px; text-align: center; cursor: pointer; position: relative;">
-								<p>Drag & drop files here, or click to select</p>
-								<input type="file" id="contentFile" name="contentFile" accept=".pptx,.pdf,.docx,.xlsx,.txt,.csv,.csv" multiple title="Upload up to 5 content files" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+						<!-- Unified Content Input (text + files) -->
+						<div class="form-group chat-input-wrapper">
+							<div id="fileChips" class="file-chips"></div>
+							<div class="chat-input-container">
+								<textarea id="chatInput" name="pastedText" placeholder="Paste text here or attach files..." rows="2">{{ pastedText or '' }}</textarea>
+								<button type="button" id="uploadBtn" class="upload-btn">+</button>
+								<input type="file" id="fileInput" name="contentFiles" accept=".pptx,.pdf,.docx,.xlsx,.txt,.csv" multiple hidden>
 							</div>
-							<div id="fileList" class="file-list" style="margin-top:8px;"></div>
-						</div>
-						<!-- Drag-and-drop script for multi-file upload -->
-						<script>
-						(function(){
-							const dropZone = document.getElementById('dropZone');
-							const fileInput = document.getElementById('contentFile');
-							const fileList = document.getElementById('fileList');
-							dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-							dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-							dropZone.addEventListener('drop', e => {
-								e.preventDefault();
-								dropZone.classList.remove('dragover');
-								const files = Array.from(e.dataTransfer.files).slice(0,5);
-								const dt = new DataTransfer();
-								files.forEach(f => dt.items.add(f));
-								fileInput.files = dt.files;
-								updateFileList();
-							});
-							fileInput.addEventListener('change', updateFileList);
-							function updateFileList(){
-								fileList.innerHTML = '';
-								Array.from(fileInput.files).slice(0,5).forEach(file => {
-									const div = document.createElement('div');
-									div.textContent = file.name;
-									fileList.appendChild(div);
-								});
-								if(fileInput.files.length > 5){
-									alert('You can only upload up to 5 files.');
-									const dt2 = new DataTransfer();
-									Array.from(fileInput.files).slice(0,5).forEach(f => dt2.items.add(f));
-									fileInput.files = dt2.files;
-									updateFileList();
-								}
-							}
-						})();
-						</script>
-						
-						<div class="form-group">
-							<!-- Textarea: allows pasting or editing of extracted slide text -->
-							<textarea class="form-control" name="pastedText" id="pastedText" rows="10" placeholder="Paste your text here...">{{ extracted_text or '' }}</textarea>
 						</div>
 						
-						<button type="submit" class="btn">Submit All</button>
+						<button type="submit" class="btn">Generate Quiz</button>
 						<!-- Submit Button: finalize configuration and generate quiz questions -->
 					</form>
 				</div>  <!-- end card -->
@@ -193,65 +158,6 @@
 
 
 	<script>
-		// Populate API key input based on selected model
-		// Parse server-side API keys into JS object
-		const apiKeys = JSON.parse('{{ keys|tojson|safe }}');
-		const modelSelect = document.getElementById('modelSelect');
-		const apiInput = document.getElementById('apiKey');
-		function populateKey() {
-			const model = modelSelect.value;
-			apiInput.value = apiKeys[model] || '';
-		}
-		modelSelect.addEventListener('change', populateKey);
-		document.addEventListener('DOMContentLoaded', populateKey);
-
-		// Load existing API Key if available
-		function loadExistingKey() {
-			const model = document.getElementById('modelSelect').value;
-			let existingKey = '';
-
-			if (model === 'gemini') {
-				existingKey = sessionStorage.getItem('geminiKey') || '';
-			} else if (model === 'openai') {
-				existingKey = sessionStorage.getItem('openaiKey') || '';
-			} else if (model === 'deepseek') {
-				existingKey = sessionStorage.getItem('deepseekKey') || '';
-			}
-
-			document.getElementById('apiKey').value = existingKey;
-		}
-
-		// Save API Key to database and update on page
-		function saveKeys() {
-			const model = document.getElementById('modelSelect').value;
-			const key = document.getElementById('apiKey').value.trim();
-
-			if (!key) {
-				alert('Please enter an API key.');
-				return;
-			}
-
-			fetch('/api_key', {
-				method: 'POST',
-				headers: {'Content-Type': 'application/json'},
-				body: JSON.stringify({model: model, key: key})
-			})
-			.then(response => {
-				if (!response.ok) throw new Error('Failed to save API key');
-				// Update local JS store and dropdown
-				apiKeys[model] = key;
-				sessionStorage.setItem(`${model}Key`, key);
-				sessionStorage.setItem('modelChoice', model);
-				alert('API key saved!');
-			})
-			.catch(error => {
-				console.error(error);
-				alert('Error saving API key.');
-			});
-		}
-		// Wire up Save API Key button
-		document.getElementById('saveKeyBtn').addEventListener('click', saveKeys);
-
 		// Upload PPTX
 		function uploadPptx() {
 			const fileInput = document.getElementById('pptxFile');
@@ -326,23 +232,33 @@
 		})();
 	</script>
 	<script>
-		/* Auto-resize for pastedText textarea: grow from 100px to 200px, then scroll */
-		const textarea = document.getElementById('pastedText');
-		if (textarea) {
-			const maxH = 200;
-			textarea.style.height = '50px';
-			textarea.style.overflowY = 'hidden';
-			textarea.addEventListener('input', () => {
-				textarea.style.height = 'auto';
-				const newH = textarea.scrollHeight;
-				if (newH > maxH) {
-					textarea.style.height = maxH + 'px';
-					textarea.style.overflowY = 'auto';
-				} else {
-					textarea.style.height = newH + 'px';
+		// Auto-resize for chatInput: expand from 2 to 8 lines, then scroll
+		(function(){
+			const chatInput = document.getElementById('chatInput');
+			if (!chatInput) return;
+			const style = getComputedStyle(chatInput);
+			const lineH = parseFloat(style.lineHeight);
+			const pad = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+			const minH = lineH * 2 + pad;
+			const maxH = lineH * 8 + pad;
+			chatInput.style.height = minH + 'px';
+			chatInput.style.overflowY = 'hidden';
+			chatInput.addEventListener('input', () => {
+				// reset to minimum height before measuring
+				chatInput.style.height = minH + 'px';
+				const h = chatInput.scrollHeight;
+				// only expand if content exceeds min height
+				if (h > minH) {
+					if (h > maxH) {
+						chatInput.style.height = maxH + 'px';
+						chatInput.style.overflowY = 'auto';
+					} else {
+						chatInput.style.height = h + 'px';
+						chatInput.style.overflowY = 'hidden';
+					}
 				}
 			});
-		}
+		})();
 	</script>
 	<script>
 		document.getElementById('menuToggle').addEventListener('click', () => {
@@ -392,6 +308,119 @@
 					} catch (err) { console.error(err); }
 				}
 			});
+		});
+	</script>
+	<script>
+		// Pill selection handler
+		document.querySelectorAll('.pill-group').forEach(group => {
+			const target = document.getElementById(group.dataset.target);
+			group.querySelectorAll('.pill').forEach(btn => {
+				if (btn.dataset.value === target.value) btn.classList.add('selected');
+				btn.addEventListener('click', () => {
+					target.value = btn.dataset.value;
+					group.querySelectorAll('.pill').forEach(p => p.classList.toggle('selected', p === btn));
+				});
+			});
+		});
+		// Slider display update
+		const slider = document.getElementById('numQuestions');
+		slider.addEventListener('input', e => document.getElementById('countDisplay').textContent = e.target.value);
+		// File attach and chips
+		const uploadBtn = document.getElementById('uploadBtn');
+		const fileInput = document.getElementById('fileInput');
+		const chips = document.getElementById('fileChips');
+		uploadBtn.addEventListener('click', () => fileInput.click());
+		let attachedFiles = [];
+		fileInput.addEventListener('change', (e) => {
+			// Merge any newly selected files
+			const newFiles = Array.from(e.target.files || []);
+			newFiles.forEach(f => attachedFiles.push(f));
+			// Always re-sync the input's files with attachedFiles
+			const dtAll = new DataTransfer();
+			attachedFiles.forEach(f => dtAll.items.add(f));
+			fileInput.files = dtAll.files;
+			renderChips();
+		});
+		// Use the entire setup card for drag/drop area
+		const cardEl = document.querySelector('.card');
+		const chatContainer = cardEl.querySelector('.chat-input-container');
+		const dropOverlay = cardEl.querySelector('.drop-overlay');
+		cardEl.addEventListener('drop', e => {
+			e.preventDefault();
+			chatContainer.classList.remove('dragover');
+			dropOverlay.classList.remove('active');
+			const dropped = Array.from(e.dataTransfer.files);
+			dropped.forEach(f => attachedFiles.push(f));
+			const dtAll = new DataTransfer();
+			attachedFiles.forEach(f => dtAll.items.add(f));
+			fileInput.files = dtAll.files;
+			renderChips();
+		});
+		// Drag-and-drop support over the entire setup card
+		cardEl.addEventListener('dragover', e => {
+			e.preventDefault();
+			chatContainer.classList.add('dragover');
+			dropOverlay.classList.add('active');
+		});
+		cardEl.addEventListener('dragleave', e => {
+			chatContainer.classList.remove('dragover');
+			dropOverlay.classList.remove('active');
+		});
+		// Helper to render file chips and handle removal
+		function renderChips() {
+			chips.innerHTML = '';
+			attachedFiles.forEach((f, idx) => {
+				// Create chip container
+				const chip = document.createElement('div'); chip.className = 'chip';
+				// Determine icon and type label based on file extension
+				const ext = f.name.split('.').pop().toLowerCase();
+				let iconName = 'fa-file';
+				let typeLabel = ext.toUpperCase();
+				switch (ext) {
+					case 'pdf': iconName = 'fa-file-pdf'; typeLabel = 'PDF'; break;
+					case 'ppt': case 'pptx': iconName = 'fa-file-powerpoint'; typeLabel = 'Presentation'; break;
+					case 'doc': case 'docx': iconName = 'fa-file-word'; typeLabel = 'Document'; break;
+					case 'xls': case 'xlsx': iconName = 'fa-file-excel'; typeLabel = 'Spreadsheet'; break;
+					case 'csv': iconName = 'fa-file-csv'; typeLabel = 'CSV'; break;
+					case 'txt': iconName = 'fa-file-lines'; typeLabel = 'Text'; break;
+				}
+				// Icon wrapper
+				const iconWrapper = document.createElement('div');
+				iconWrapper.className = `icon-wrapper ${ext}`;
+				const icon = document.createElement('i');
+				icon.classList.add('fa-solid', iconName);
+				iconWrapper.appendChild(icon);
+				// File info container
+				const info = document.createElement('div'); info.className = 'file-info';
+				const nameEl = document.createElement('div'); nameEl.className = 'file-name'; nameEl.textContent = f.name;
+				const typeEl = document.createElement('div'); typeEl.className = 'file-type-label'; typeEl.textContent = typeLabel;
+				info.appendChild(nameEl);
+				info.appendChild(typeEl);
+				chip.appendChild(iconWrapper);
+				chip.appendChild(info);
+				// Remove button
+				const rm = document.createElement('span'); rm.textContent = '×'; rm.className = 'remove';
+				rm.onclick = () => {
+					attachedFiles.splice(idx, 1);
+					const dt2 = new DataTransfer();
+					attachedFiles.forEach(x => dt2.items.add(x));
+					fileInput.files = dt2.files;
+					renderChips();
+				};
+				chip.appendChild(rm);
+				chips.appendChild(chip);
+			});
+		}
+		// Nav bar history sidebar toggle
+		const layoutEl = document.querySelector('.page-layout');
+		const sidebarToggleNav = document.getElementById('sidebarToggleNav');
+		const sidebarNavIcon = sidebarToggleNav.querySelector('i');
+		sidebarToggleNav.addEventListener('click', () => {
+			const isCollapsed = layoutEl.classList.toggle('collapsed');
+			// Rotate the columns icon to indicate state
+			sidebarNavIcon.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+			// Update hover title
+			sidebarToggleNav.title = isCollapsed ? 'Show History' : 'Hide History';
 		});
 	</script>
 </body>

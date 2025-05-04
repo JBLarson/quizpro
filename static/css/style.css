@@ -15,6 +15,7 @@
   --link-hover-bg: #e0e7ff;
   --link-hover-color: #1d4ed8;
   --toggle-color: #000000; /* icon color for light mode */
+  --sidebar-width: 200px;
 }
 .dark {
   --bg-color: #121212;
@@ -115,6 +116,7 @@ button:disabled {
   padding: 0 16px;
   max-width: none !important;
   margin: 0 !important;
+  position: relative;
 }
 
 /* Space between adjacent items */
@@ -184,6 +186,7 @@ button.theme-toggle:hover {
 
 /* Layout and component utility classes */
 .card {
+  position: relative;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
@@ -385,11 +388,13 @@ textarea.form-control {
   min-height: calc(100vh - 60px); /* account for nav bar height */
 }
 .sidebar {
-  width: 240px;
   background: var(--container-bg);
   padding: 16px;
+  width: var(--sidebar-width);
   border-right: 1px solid var(--input-border);
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.3s ease;
 }
 .sidebar h3 {
   margin-top: 0;
@@ -412,6 +417,19 @@ textarea.form-control {
 .main-content {
   flex: 1;
   padding: 16px;
+  transition: margin-left 0.3s ease;
+}
+.page-layout .main-content {
+  /* no manual horizontal offset; flex will place content next to the sidebar */
+}
+.page-layout.collapsed .main-content {
+  margin-left: 0;
+}
+.page-layout.collapsed .sidebar {
+  width: 0;
+  padding: 0;
+  border-right: none;
+  overflow: hidden;
 }
 
 /* Hamburger menu and dropdown for theme toggle */
@@ -799,4 +817,275 @@ html.dark .options-list li.user-option {
 html.dark .explanation {
   color: #ccc;
 }
+
+/* Setup Page UI Overlays */
+.pill-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.pill-group .pill {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--input-border);
+  border-radius: 16px;
+  background: var(--container-bg);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.pill-group .pill.selected {
+  background: var(--button-bg);
+  color: var(--button-color);
+}
+
+.chat-input-wrapper {
+  margin-bottom: 1rem;
+  position: relative; /* position relative for overlay */
+}
+.chat-input-container {
+  position: relative;
+  background: var(--container-bg);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden; /* clip overlay to container bounds */
+}
+.chat-input-container textarea {
+  line-height: 1.5em;
+  width: 100%;
+  padding: 0.6rem 2.5rem 0.6rem 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  resize: none;
+  overflow-y: auto;
+  max-height: calc(8 * 1.5em + 1.2rem);
+  box-sizing: border-box;
+}
+.chat-input-container textarea:focus {
+  outline: none;
+}
+.upload-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0.5rem;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 32px;
+  height: 32px;
+  background: var(--button-bg);
+  color: var(--button-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1;
+  font-size: 1.25rem;
+}
+.upload-btn:hover {
+  filter: brightness(0.9);
+}
+.file-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.file-chips .chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--container-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.file-chips .chip .icon-wrapper {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  border-radius: 4px;
+  color: #fff;
+}
+/* file type backgrounds */
+.file-chips .chip .icon-wrapper.pdf { background: #d9534f; }
+.file-chips .chip .icon-wrapper.pptx,
+.file-chips .chip .icon-wrapper.ppt { background: #f0ad4e; }
+.file-chips .chip .icon-wrapper.docx,
+.file-chips .chip .icon-wrapper.doc { background: #0275d8; }
+.file-chips .chip .icon-wrapper.xlsx,
+.file-chips .chip .icon-wrapper.xls { background: #5cb85c; }
+.file-chips .chip .icon-wrapper.csv { background: #5cb85c; }
+.file-chips .chip .icon-wrapper.txt { background: #6c757d; }
+
+.file-chips .chip .file-info {
+  display: flex;
+  flex-direction: column;
+}
+.file-chips .chip .file-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+.file-chips .chip .file-type-label {
+  font-size: 0.75rem;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+.file-chips .chip .remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+.file-chips .chip .remove:hover {
+  opacity: 1;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 80px;
+  left: var(--sidebar-width);
+  transform: translateX(-100%);
+  background: var(--container-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  z-index: 1001;
+  transition: left 0.3s ease, transform 0.3s ease;
+}
+.page-layout.collapsed .sidebar-toggle {
+  left: 1rem;
+  transform: none;
+}
+.sidebar-toggle i {
+  font-size: 1rem;
+}
+
+/* ChatGPT-style dragover highlight */
+.chat-input-container.dragover {
+  border-color: var(--button-bg);
+  background-color: var(--card-bg);
+}
+
+/* Chat input responsiveness */
+.chat-input-wrapper, .chat-input-container {
+  width: 100%;
+  max-width: 100%;
+}
+.chat-input-container textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .chat-input-container textarea {
+    font-size: 0.9rem;
+  }
+}
+
+/* Dark Mode override for upload (+) button */
+html.dark .upload-btn {
+  background: none !important;
+  border: none !important;
+  color: var(--text-color) !important;
+}
+
+/* Remove focus outlines */
+.chat-input-container textarea:focus,
+.chat-input-container:focus-within {
+  outline: none;
+}
+
+/* Upload button circular bubble */
+.upload-btn:focus {
+  outline: none;
+}
+.upload-btn:hover {
+  filter: brightness(0.9);
+}
+
+/* overlay drop zone enlarged invisibly around the container, but clipped to it */
+.drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none; /* allow underlying drag events */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border-radius: 8px;
+  z-index: 2;
+}
+.drop-overlay.active {
+  display: flex;
+}
+.drop-content {
+  text-align: center;
+  padding: 1rem;
+}
+.drop-icons span {
+  font-size: 2rem;
+  margin: 0 0.5rem;
+}
+.drop-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 0.5rem;
+}
+.drop-subtitle {
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+/* History toggle in nav bar */
+.sidebar-nav-toggle {
+  background: transparent !important;
+  border: none;
+  color: var(--text-color) !important;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0;
+}
+.sidebar-nav-toggle:hover {
+  background: transparent !important;
+}
+
+/* --- Setup Page Layout Overrides --- */
+.page-layout .main-content.setup-page {
+  /* only vertical spacing; horizontal gutters via container centering */
+  padding: 16px 0 !important;
+}
+.page-layout .main-content.setup-page > .container {
+  /* dynamic responsive width: 90% of viewport, capped */
+  width: 90% !important;
+  max-width: 800px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+.page-layout .main-content.setup-page .card {
+  /* fill the container width and keep bottom spacing */
+  width: 100% !important;
+  margin: 0 0 24px !important;
+}
+/* --- End Setup Page Layout Overrides --- */
+
+/* ================================================ */
 

@@ -1107,3 +1107,22 @@ html.dark .upload-btn {
 
 /* ================================================ */
 
+/* Add custom scrollbar styling to remove track background */
+.chat-input-container textarea::-webkit-scrollbar {
+  width: 8px !important;
+}
+.chat-input-container textarea::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.chat-input-container textarea::-webkit-scrollbar-thumb {
+  background-color: var(--input-border) !important;
+  border-radius: 4px !important;
+}
+/* Firefox scrollbar styling */
+@supports (scrollbar-width: thin) {
+  .chat-input-container textarea {
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--input-border) transparent !important;
+  }
+}
+

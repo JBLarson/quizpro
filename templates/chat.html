@@ -14,13 +14,11 @@
   <div class="menu-bar-wrapper">
     <div class="menu-bar">
       <a href="{{ url_for('setup') }}" class="btn back-btn">Back to Setup</a>
-      <button id="menuToggle" class="menu-toggle" title="Menu">☰</button>
+      <button id="menuToggle" class="menu-toggle user-toggle" title="Account">
+        <img src="{{ gravatar_url(current_user.email, 32) }}" alt="User Avatar" class="user-avatar">
+      </button>
       <div id="dropdownMenu" class="dropdown-menu">
-        <label class="switch">
-          Dark Mode
-          <input type="checkbox" id="themeToggle">
-          <span class="slider"></span>
-        </label>
+        <button type="button" id="settingsBtn" class="dropdown-item">Settings</button>
         <a href="{{ url_for('logout') }}" class="dropdown-item">Logout</a>
       </div>
     </div>
@@ -75,12 +73,6 @@
     document.getElementById('menuToggle').addEventListener('click', () => {
       const menu = document.getElementById('dropdownMenu');
       const opening = menu.style.display !== 'block';
-      if (opening) {
-        // Sync checkbox to current theme
-        const toggle = document.getElementById('themeToggle');
-        const isDark = document.documentElement.classList.contains('dark');
-        if (toggle) toggle.checked = isDark;
-      }
       menu.style.display = opening ? 'block' : 'none';
     });
     document.addEventListener('click', e => {
@@ -113,6 +105,38 @@
         });
       }
     })();
+  </script>
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <button type="button" class="close-btn" id="closeSettings">&times;</button>
+      <h2>Settings</h2>
+      <div class="form-group">
+        <label class="switch">
+          Dark Mode
+          <input type="checkbox" id="themeToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Settings modal open/close handlers
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    settingsBtn.addEventListener('click', e => {
+      e.preventDefault();
+      dropdownMenu.style.display = 'none';
+      settingsModal.style.display = 'flex';
+      const themeToggleEl = document.getElementById('themeToggle');
+      if (themeToggleEl) themeToggleEl.checked = document.documentElement.classList.contains('dark');
+    });
+    closeSettings.addEventListener('click', () => settingsModal.style.display = 'none');
+    settingsModal.addEventListener('click', e => {
+      if (e.target === settingsModal) settingsModal.style.display = 'none';
+    });
   </script>
 </body>
 </html>

@@ -26,6 +26,7 @@ from .parser_docx_text import docx_to_text  # DOCX parsing utility
 from .parser_xlsx_text import xlsx_to_text  # XLSX parsing utility
 import google.genai as genai  # Google GenAI SDK for Gemini
 import random
+import hashlib
 
 # --------------------------------
 # Environment & App Initialization
@@ -55,6 +56,17 @@ db.init_app(app)     # Bind SQLAlchemy
 migrate.init_app(app, db)  # Bind Alembic migrations
 login_manager.init_app(app)  # Set up Flask-Login
 login_manager.login_view = 'login'  # Redirect unauthorized to login page
+
+@app.context_processor
+def utility_processor():
+    """
+    Provide utility functions to templates.
+    """
+    def gravatar_url(email, size=32):
+        email_clean = email.strip().lower()
+        email_hash = hashlib.md5(email_clean.encode('utf-8')).hexdigest()
+        return f"https://www.gravatar.com/avatar/{email_hash}?d=identicon&s={size}"
+    return dict(gravatar_url=gravatar_url)
 
 # --------------------------------
 # Ensure database tables exist before handling any request (development/demo)

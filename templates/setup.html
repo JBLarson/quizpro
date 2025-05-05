@@ -17,14 +17,12 @@
 			<button id="sidebarToggleNav" class="sidebar-nav-toggle" title="Hide History">
 				<i class="fas fa-stream"></i>
 			</button>
-			<!-- Hamburger menu toggles theme dropdown -->
-			<button id="menuToggle" class="menu-toggle" title="Menu">☰</button>
+			<!-- User avatar toggles account dropdown -->
+			<button id="menuToggle" class="menu-toggle user-toggle" title="Account">
+				<img src="{{ gravatar_url(current_user.email, 32) }}" alt="User Avatar" class="user-avatar">
+			</button>
 			<div id="dropdownMenu" class="dropdown-menu">
-				<label class="switch">
-					Dark Mode
-					<input type="checkbox" id="themeToggle">
-					<span class="slider"></span>
-				</label>
+				<button type="button" id="settingsBtn" class="dropdown-item">Settings</button>
 				<a href="{{ url_for('logout') }}" class="dropdown-item">Logout</a>
 			</div>
 		</div>
@@ -124,39 +122,6 @@
 		</main>
 	</div>  <!-- end page-layout -->
 
-	<!-- Config Section 
-	<h3>Configure Chat Behavior</h3>
-
-	<label for="tone">Tone:</label>
-	<select id="tone" name="tone">
-		<option value="formal">Formal</option>
-		<option value="casual">Casual</option>
-		<option value="friendly">Friendly</option>
-	</select>
-
-	<label for="difficulty">Difficulty:</label>
-	<select id="difficulty" name="difficulty">
-		<option value="easy">Easy</option>
-		<option value="medium">Medium</option>
-		<option value="hard">Hard</option>
-	</select>
-
-	<label for="style">Style:</label>
-	<select id="style" name="style">
-		<option value="multiple-choice">Multiple Choice</option>
-		<option value="short-answer">Short Answer</option>
-		<option value="free-response">Free Response</option>
-	</select>
-
-    <hr>
-
-    <button onclick="saveConfig()">Save Config</button>
-
-
-    -->
-
-
-
 	<script>
 		// Upload PPTX
 		function uploadPptx() {
@@ -206,30 +171,30 @@
 		}
 	</script>
 	<script>
-		(function() {
+		document.addEventListener('DOMContentLoaded', () => {
 			const toggle = document.getElementById('themeToggle');
 			const root = document.documentElement;
-			// Apply saved theme and sync toggle state
+			if (!toggle) return;
+			// Apply saved theme and sync switch state
 			const current = localStorage.getItem('theme') || 'light';
 			if (current === 'dark') {
 				root.classList.add('dark');
-				if (toggle) toggle.checked = true;
+				toggle.checked = true;
 			} else {
-				if (toggle) toggle.checked = false;
+				toggle.checked = false;
+				root.classList.remove('dark');
 			}
-			// Toggle theme based on checkbox change
-			if (toggle) {
-				toggle.addEventListener('change', () => {
-					if (toggle.checked) {
-						root.classList.add('dark');
-						localStorage.setItem('theme', 'dark');
-					} else {
-						root.classList.remove('dark');
-						localStorage.setItem('theme', 'light');
-					}
-				});
-			}
-		})();
+			// Listen for changes
+			toggle.addEventListener('change', function() {
+				if (this.checked) {
+					root.classList.add('dark');
+					localStorage.setItem('theme', 'dark');
+				} else {
+					root.classList.remove('dark');
+					localStorage.setItem('theme', 'light');
+				}
+			});
+		});
 	</script>
 	<script>
 		// Auto-resize for chatInput: expand from 2 to 8 lines, then scroll
@@ -261,17 +226,20 @@
 		})();
 	</script>
 	<script>
-		document.getElementById('menuToggle').addEventListener('click', () => {
-			const menu = document.getElementById('dropdownMenu');
-			menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-		});
-		// Close dropdown if clicked outside
-		document.addEventListener('click', e => {
-			const menu = document.getElementById('dropdownMenu');
-			const toggle = document.getElementById('menuToggle');
-			if (!toggle.contains(e.target) && !menu.contains(e.target)) {
-				menu.style.display = 'none';
-			}
+		document.addEventListener('DOMContentLoaded', () => {
+			// Dropdown menu toggle
+			document.getElementById('menuToggle').addEventListener('click', () => {
+				const menu = document.getElementById('dropdownMenu');
+				const opening = menu.style.display !== 'block';
+				menu.style.display = opening ? 'block' : 'none';
+			});
+			document.addEventListener('click', e => {
+				const menu = document.getElementById('dropdownMenu');
+				const toggle = document.getElementById('menuToggle');
+				if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+					menu.style.display = 'none';
+				}
+			});
 		});
 	</script>
 	<script>
@@ -442,6 +410,80 @@
 				icon.classList.remove('fa-bars');
 				icon.classList.add('fa-stream');
 			}
+		});
+	</script>
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			const btn = document.getElementById('settingsBtn');
+			const modal = document.getElementById('settingsModal');
+			const closeBtn = document.getElementById('closeSettings');
+			const toggle = document.getElementById('themeToggle');
+			// Open modal
+			btn.addEventListener('click', function(e) {
+				e.preventDefault();
+				document.getElementById('dropdownMenu').style.display = 'none';
+				modal.style.display = 'flex';
+				if (toggle) toggle.checked = document.documentElement.classList.contains('dark');
+			});
+			// Close modal
+			closeBtn.addEventListener('click', function() { modal.style.display = 'none'; });
+			modal.addEventListener('click', function(e) { if (e.target === modal) modal.style.display = 'none'; });
+			// Theme toggle
+			if (toggle) {
+				const saved = localStorage.getItem('theme') === 'dark';
+				document.documentElement.classList.toggle('dark', saved);
+				toggle.checked = saved;
+				toggle.addEventListener('change', function() {
+					const dark = this.checked;
+					document.documentElement.classList.toggle('dark', dark);
+					localStorage.setItem('theme', dark ? 'dark' : 'light');
+				});
+			}
+		});
+	</script>
+	<!-- Settings Modal -->
+	<div id="settingsModal" class="modal">
+		<div class="modal-content">
+			<button type="button" class="close-btn" id="closeSettings">&times;</button>
+			<h2>Settings</h2>
+			<div class="form-group">
+				<label class="switch">
+					Dark Mode
+					<input type="checkbox" id="themeToggle" />
+					<span class="slider"></span>
+				</label>
+			</div>
+		</div>
+	</div>
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			// Theme initialization
+			var toggle = document.getElementById('themeToggle');
+			var isDark = localStorage.getItem('theme') === 'dark';
+			if (toggle) {
+				toggle.checked = isDark;
+				document.documentElement.classList.toggle('dark', isDark);
+				toggle.addEventListener('change', function() {
+					var dark = this.checked;
+					document.documentElement.classList.toggle('dark', dark);
+					localStorage.setItem('theme', dark ? 'dark' : 'light');
+				});
+			}
+			// Modal open/close
+			var btn = document.getElementById('settingsBtn');
+			var modal = document.getElementById('settingsModal');
+			var closeBtn = document.getElementById('closeSettings');
+			btn.addEventListener('click', function(e) {
+				e.preventDefault();
+				document.getElementById('dropdownMenu').style.display = 'none';
+				modal.style.display = 'flex';
+			});
+			closeBtn.addEventListener('click', function() {
+				modal.style.display = 'none';
+			});
+			modal.addEventListener('click', function(e) {
+				if (e.target === modal) modal.style.display = 'none';
+			});
 		});
 	</script>
 </body>

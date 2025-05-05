@@ -330,7 +330,7 @@ html.dark label {
 }
 
 .btn:hover, a.btn:hover {
-  background: #3a7adf;
+  background: transparent !important;
 }
 
 /* Dark mode overrides for anchor buttons */
@@ -826,7 +826,7 @@ html.dark .explanation {
 }
 .pill-group .pill {
   padding: 0.4rem 0.8rem;
-  border: 1px solid var(--input-border);
+  border: 1px solid var(--text-color) !important;
   border-radius: 16px;
   background: var(--container-bg);
   cursor: pointer;
@@ -835,6 +835,7 @@ html.dark .explanation {
 .pill-group .pill.selected {
   background: var(--button-bg);
   color: var(--button-color);
+  border: 1px solid var(--button-bg) !important;
 }
 
 .chat-input-wrapper {
@@ -1180,4 +1181,98 @@ input[type=range]#numQuestions::-moz-range-thumb {
 }
 
 /* Removed rotation animation: icon shape is handled via JS class swap */
+
+/* Profile avatar toggle styling */
+.menu-toggle.user-toggle {
+  margin-left: auto !important;
+  margin-right: 2.5% !important;
+  padding: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.menu-toggle.user-toggle .user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Settings Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+  z-index: 1002;
+}
+.modal-content {
+  background: var(--container-bg);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: var(--container-shadow);
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+}
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+/* User Feedback Overrides */
+
+/* 1. Add border around the chat input container for clarity */
+.chat-input-container {
+  border: 1px solid var(--input-border);
+}
+
+/* 2. Remove backgrounds behind primary buttons; use accent color for button text */
+.btn, a.btn {
+  background: transparent !important;
+  color: var(--button-bg) !important;
+}
+
+/* 3. Ensure pill buttons are visible in light mode and highlight selected state */
+.pill-group .pill {
+  background: transparent;
+  color: var(--text-color);
+}
+.pill-group .pill.selected {
+  background: transparent;
+  color: var(--button-bg);
+  border-color: var(--button-bg);
+}
+
+/* Further User Feedback Overrides */
+
+/* Remove hover background from primary buttons */
+.btn:hover, a.btn:hover {
+  background: transparent !important;
+}
+
+/* Strengthen pill-group button borders in light mode */
+.pill-group .pill {
+  border: 1px solid var(--text-color) !important;
+}
+.pill-group .pill.selected {
+  border: 1px solid var(--button-bg) !important;
+}
+
+/* Dark Mode: remove chat-input container border for flush look */
+html.dark .chat-input-container {
+  border: none !important;
+}
 

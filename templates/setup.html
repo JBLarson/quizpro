@@ -431,7 +431,17 @@
 		const sidebarToggleNav = document.getElementById('sidebarToggleNav');
 		sidebarToggleNav.addEventListener('click', () => {
 			const isCollapsed = layoutEl.classList.toggle('collapsed');
+			// Toggle title
 			sidebarToggleNav.title = isCollapsed ? 'Show History' : 'Hide History';
+			// Swap icon between stream (open) and bars (closed)
+			const icon = sidebarToggleNav.querySelector('i');
+			if (isCollapsed) {
+				icon.classList.remove('fa-stream');
+				icon.classList.add('fa-bars');
+			} else {
+				icon.classList.remove('fa-bars');
+				icon.classList.add('fa-stream');
+			}
 		});
 	</script>
 </body>

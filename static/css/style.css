@@ -1062,20 +1062,11 @@ html.dark .upload-btn {
 .sidebar-nav-toggle {
   background: transparent !important;
   border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
   color: var(--text-color) !important;
-  cursor: pointer !important;
-  font-size: 1.2rem !important;
-  padding: 0 !important;
-}
-.sidebar-nav-toggle i {
-  color: var(--text-color) !important;
-}
-.sidebar-nav-toggle:hover {
-  background: transparent !important;
-  outline: none !important;
-  box-shadow: none !important;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0;
+  /* position is static; no horizontal offset */
 }
 .sidebar-nav-toggle:focus, .sidebar-nav-toggle:focus-visible {
   outline: none !important;
@@ -1187,4 +1178,6 @@ input[type=range]#numQuestions::-moz-range-thumb {
   background: var(--button-bg);
   cursor: pointer;
 }
+
+/* Removed rotation animation: icon shape is handled via JS class swap */
 

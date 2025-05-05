@@ -955,8 +955,8 @@ html.dark .explanation {
   top: 80px;
   left: var(--sidebar-width);
   transform: translateX(-100%);
-  background: var(--container-bg);
-  border: 1px solid var(--input-border);
+  background: transparent !important;
+  border: none !important;
   border-radius: 4px;
   padding: 6px 10px;
   display: flex;
@@ -973,6 +973,10 @@ html.dark .explanation {
 }
 .sidebar-toggle i {
   font-size: 1rem;
+}
+.sidebar-toggle:focus, .sidebar-toggle:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* ChatGPT-style dragover highlight */
@@ -1057,14 +1061,25 @@ html.dark .upload-btn {
 /* History toggle in nav bar */
 .sidebar-nav-toggle {
   background: transparent !important;
-  border: none;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   color: var(--text-color) !important;
-  cursor: pointer;
-  font-size: 1.2rem;
-  padding: 0;
+  cursor: pointer !important;
+  font-size: 1.2rem !important;
+  padding: 0 !important;
+}
+.sidebar-nav-toggle i {
+  color: var(--text-color) !important;
 }
 .sidebar-nav-toggle:hover {
   background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.sidebar-nav-toggle:focus, .sidebar-nav-toggle:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* --- Setup Page Layout Overrides --- */

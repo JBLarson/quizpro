@@ -15,7 +15,7 @@
 		<div class="menu-bar">
 			<!-- History sidebar toggle at top-left -->
 			<button id="sidebarToggleNav" class="sidebar-nav-toggle" title="Hide History">
-				<i class="fas fa-columns"></i>
+				<i class="fas fa-stream"></i>
 			</button>
 			<!-- Hamburger menu toggles theme dropdown -->
 			<button id="menuToggle" class="menu-toggle" title="Menu">☰</button>
@@ -429,12 +429,8 @@
 		// Nav bar history sidebar toggle
 		const layoutEl = document.querySelector('.page-layout');
 		const sidebarToggleNav = document.getElementById('sidebarToggleNav');
-		const sidebarNavIcon = sidebarToggleNav.querySelector('i');
 		sidebarToggleNav.addEventListener('click', () => {
 			const isCollapsed = layoutEl.classList.toggle('collapsed');
-			// Rotate the columns icon to indicate state
-			sidebarNavIcon.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
-			// Update hover title
 			sidebarToggleNav.title = isCollapsed ? 'Show History' : 'Hide History';
 		});
 	</script>

@@ -100,6 +100,10 @@ class QuizQuestion(db.Model):
     options = db.Column(db.JSON, nullable=False)
     correct_answer = db.Column(db.Text, nullable=False)
     user_answer = db.Column(db.Text)
+    topic = db.Column(db.String(255), nullable=True)
+    hint = db.Column(db.Text, nullable=True)
+    explanation = db.Column(db.Text, nullable=True)
+    is_correct = db.Column(db.Boolean, nullable=True)
     answered_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -113,3 +117,13 @@ class ChatMessage(db.Model):
     sender = db.Column(db.String(20), nullable=False)  # 'user' or 'ai'
     message = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# New model to track user performance by topic
+class TopicPerformance(db.Model):
+    __tablename__ = 'topic_performance'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    topic = db.Column(db.String(255), nullable=False)
+    attempts = db.Column(db.Integer, default=0)
+    correct = db.Column(db.Integer, default=0)
+    # Tracks how many times a user has attempted and answered correctly for a topic

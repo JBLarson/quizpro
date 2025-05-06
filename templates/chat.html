@@ -37,8 +37,9 @@
       <div class="progress-container">
         <div class="progress-bar" id="progressBar" data-index="{{ index }}" data-total="{{ total }}"></div>
       </div>
-      <!-- Answer form: radio options and Next button -->
-      <form method="POST">
+      <!-- Answer form: radio options, Hint button, and Submit button -->
+      <form id="chat-form" method="POST">
+        <input type="hidden" id="questionId" value="{{ question.id }}">
         {% if question.options %}
           {% for letter, text in question.options.items() %}
             <div class="form-group option">
@@ -52,6 +53,8 @@
             <textarea class="form-control" id="answer" name="answer" rows="4" required placeholder="Type your answer here..."></textarea>
           </div>
         {% endif %}
+        <button type="button" id="hint-btn" class="btn">Hint</button>
+        <div id="hint-text" class="hint" style="display:none;">{{ question.hint or 'No hint available.' }}</div>
         <button type="submit" class="btn">Next</button>
       </form>
     </div> <!-- end card -->
@@ -138,5 +141,6 @@
       if (e.target === settingsModal) settingsModal.style.display = 'none';
     });
   </script>
+  <script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
 </body>
 </html>

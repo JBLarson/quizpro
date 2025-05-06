@@ -9,7 +9,7 @@
 # --------------------------------
 # Imports & SDK Configuration
 # --------------------------------
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session, abort  # Core Flask components
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session, abort, Response  # Core Flask components
 from flask_cors import CORS  # Enable cross-origin requests for frontend static files
 import os, json  # os for file paths/env, json for data serialization
 from dotenv import load_dotenv  # Load .env file into environment
@@ -27,6 +27,8 @@ from .parser_xlsx_text import xlsx_to_text  # XLSX parsing utility
 import google.genai as genai  # Google GenAI SDK for Gemini
 import random
 import hashlib
+from .adaptive import record_performance, get_poor_topics, order_questions
+import json as _json
 
 # --------------------------------
 # Environment & App Initialization
@@ -277,17 +279,23 @@ def setup():
             prompt = (
                 "Give your quiz a concise, professional title on the first line starting with 'Title: '. "
                 f"Then list exactly {num_questions} multiple-choice questions from this content: {content_str}. "
-                "For each question, format exactly like this: '\n1. Question text\nA) Option A\nB) Option B\nC) Option C\nD) Option D\nAnswer: X<|Q|>'. "
-                "Use that exact template, include <|Q|> after each question (including the last), and ensure only those texts appear."
+                "For each question, use this exact format with one '\n' line per item:\n"
+                "1. Question text\n"
+                "A) Option A\nB) Option B\nC) Option C\nD) Option D\n"
+                "Hint: Provide a brief, helpful hint for solving the question\n"
+                "Answer: X<|Q|>\n"
+                "Include <|Q|> after each question and no extra text."
             )
         else:
+            # Ask free-response questions with hints
             prompt = (
-                "Give your quiz a concise, professional, and studious title that clearly references the subject matter being studied on the first line prefixed with 'Title: '. "
-                f"Then list exactly {num_questions} free-response quiz questions based solely on the following content: {content_str}. "
-                "Do not include any other text before the title or questions. "
-                "Start each question directly with its number (e.g., '1.') on its own line, followed by the question text. "
-                "After each question, on a new line prefix 'Answer: ' followed by the complete answer, then end the question with '<|Q|>'. "
-                "Include '<|Q|>' after the final question so splitting yields exactly {num_questions} items."
+                "Give your quiz a concise, professional title on the first line prefixed with 'Title: '. "
+                f"Then list exactly {num_questions} free-response questions based solely on the following content: {content_str}. "
+                "For each question, use this exact format with line breaks as shown:\n"
+                "1. Question text\n"
+                "Hint: Provide a brief, helpful hint for solving the question\n"
+                "Answer: Complete answer text<|Q|>\n"
+                "Include '<|Q|>' after each question and no additional text before, between, or after."
             )
         # Generate questions and parse to structured dicts
         questions = generate_questions(api_key, selected_model, prompt)
@@ -319,28 +327,42 @@ def setup():
             if question_type == 'multiple_choice':
                 options = {}
                 correct = None
+                hint = None
+                # Parse options, hint, and answer
                 for line in lines[1:]:
+                    # Option lines A)-D)
                     m = re.match(r'^([A-D])[\)\.:]\s*(.*)', line)
                     if m:
                         options[m.group(1)] = m.group(2).strip()
                         continue
+                    # Hint line
+                    m_hint = re.match(r'^Hint[:\s]*(.*)', line, re.IGNORECASE)
+                    if m_hint:
+                        hint = m_hint.group(1).strip()
+                        continue
+                    # Answer line
                     m2 = re.search(r'Answer[:\s]*([A-D])', line, re.IGNORECASE)
                     if m2:
                         correct = m2.group(1)
                 if correct and len(options) == 4:
-                    parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct})
+                    parsed_qs.append({'prompt': question_text, 'options': options, 'answer': correct, 'hint': hint})
                 else:
-                    # fallback: no valid MC options, treat as text-only question
-                    parsed_qs.append({'prompt': question_text, 'options': {}, 'answer': ''})
+                    # fallback: no valid MC options
+                    parsed_qs.append({'prompt': question_text, 'options': {}, 'answer': '', 'hint': hint})
             else:
                 answer = ''
+                hint = None
+                # Extract hint if provided
                 for line in lines[1:]:
+                    m_hint = re.match(r'^Hint[:\s]*(.*)', line, re.IGNORECASE)
+                    if m_hint:
+                        hint = m_hint.group(1).strip()
+                        continue
                     m2 = re.match(r'^Answer[:\s]*(.*)', line, re.IGNORECASE)
                     if m2:
                         answer = m2.group(1).strip()
                         break
-                if answer:
-                    parsed_qs.append({'prompt': question_text, 'options': {}, 'answer': answer})
+                parsed_qs.append({'prompt': question_text, 'options': {}, 'answer': answer, 'hint': hint})
         # validate parsed question count
         if len(parsed_qs) == 0:
             flash("No valid questions parsed. Please try again.", "error")
@@ -366,6 +388,9 @@ def setup():
                         ans_map = letter
                 qst['options'] = opt_map
                 qst['answer'] = ans_map
+        # Reorder questions based on user performance (poor topics first)
+        poor_topics = get_poor_topics(current_user.id)
+        parsed_qs = order_questions(parsed_qs, poor_topics)
         # Persist a new quiz session and its questions
         new_session = QuizSession(
             user_id=current_user.id,
@@ -385,7 +410,8 @@ def setup():
                 question_index=idx,
                 prompt=q['prompt'],
                 options=q['options'],
-                correct_answer=q['answer']
+                correct_answer=q['answer'],
+                hint=q.get('hint')
             )
             db.session.add(qq)
         db.session.commit()
@@ -876,3 +902,63 @@ def resume_session(session_id):
 if __name__ == '__main__':
     # Start Flask in debug mode
     app.run(debug=True)
+
+@app.route('/answer_question', methods=['POST'])
+@login_required
+def answer_question():
+    """Handle AJAX answer submission, record correctness, return explanation."""
+    data = request.get_json() or {}
+    qid = data.get('question_id')
+    ans = data.get('answer', '').strip()
+    q = QuizQuestion.query.get(qid)
+    if not q:
+        return jsonify(error="Question not found"), 404
+    q.user_answer = ans
+    from datetime import datetime
+    q.answered_at = datetime.utcnow()
+    q.is_correct = (ans == q.correct_answer)
+    api_key = get_user_api_key()
+    eval_res = evaluate_answer(api_key, 'gemini', q.prompt, ans, q.correct_answer)
+    # store only the explanation text, not the full dict
+    explanation_text = eval_res.get('explanation') if isinstance(eval_res, dict) else str(eval_res)
+    q.explanation = explanation_text
+    db.session.commit()
+    record_performance(current_user.id, q)
+    # advance to the next question index in session
+    current_idx = session.get('current_question_index', 0)
+    session['current_question_index'] = current_idx + 1
+    # include status if available
+    response_payload = {'explanation': explanation_text, 'is_correct': q.is_correct}
+    if isinstance(eval_res, dict) and 'status' in eval_res:
+        response_payload['status'] = eval_res['status']
+    return jsonify(response_payload)
+
+@app.route('/get_hint', methods=['POST'])
+@login_required
+def get_hint():
+    """Return a stored hint or generate a new one via LLM and cache it."""
+    data = request.get_json() or {}
+    qid = data.get('question_id')
+    q = QuizQuestion.query.get(qid)
+    if not q:
+        return jsonify(error="Question not found"), 404
+    if q.hint:
+        return jsonify(hint=q.hint), 200
+    # Generate hint on demand using AI
+    api_key = get_user_api_key()
+    hint_prompt = f"Provide a concise hint to help answer the following question: '{q.prompt}'"
+    client = genai.Client(api_key=api_key)
+    try:
+        resp = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[{"text": hint_prompt}],
+            config={"temperature": 0.2, "max_output_tokens": 128}
+        )
+        parts = resp.candidates[0].content.parts or [] if resp and resp.candidates else []
+        hint_text = "".join(part.text or "" for part in parts).strip()
+    except Exception:
+        hint_text = "Hint unavailable."
+    # Cache and return
+    q.hint = hint_text
+    db.session.commit()
+    return jsonify(hint=hint_text), 200

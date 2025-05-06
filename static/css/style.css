@@ -456,6 +456,7 @@ textarea.form-control {
   padding: 8px;
   display: none;
   z-index: 1001;
+  overflow: hidden !important;
 }
 .dropdown-menu button {
   background: none;
@@ -465,7 +466,10 @@ textarea.form-control {
   cursor: pointer;
 }
 .dropdown-menu button:hover {
-  filter: brightness(0.9);
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  background-image: none !important;
 }
 
 /* Adjust nav bar wrapper for position */
@@ -533,17 +537,41 @@ textarea.form-control {
 /* Style dropdown items and hover effect */
 .dropdown-menu .dropdown-item {
   display: block;
-  margin: 4px 0;  /* vertical spacing only; horizontal inset from container padding */
-  padding: 8px 12px;
-  color: var(--link-color);
+  margin: 4px 0 !important;
+  padding: 8px 12px !important;
+  color: var(--link-color) !important;
   text-decoration: none;
   border-radius: 4px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  background: transparent !important;
+  transition: none !important;
 }
-.dropdown-menu .dropdown-item:hover {
-  background-color: var(--link-hover-bg);
-  color: var(--link-hover-color);
+/* Force neutral overlay on hover/focus */
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus,
+.dropdown-menu .dropdown-item:active {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
 }
+
+/* Remove legacy brightness filter on dropdown buttons */
+.dropdown-menu button:hover {
+  filter: none !important;
+}
+
+/* Ensure Settings button inherits dropdown-item behavior */
+#settingsBtn.dropdown-item,
+#settingsBtn {
+  font-size: 16px !important;
+  background: none !important;
+  border: none !important;
+}
+#settingsBtn:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  filter: none !important;
+  color: var(--text-color) !important;
+}
+/* --- End dropdown hover override --- */
 
 /* Sidebar session title fade-out mask */
 .sidebar-list .session-link {
@@ -585,9 +613,10 @@ textarea.form-control {
   box-shadow: var(--container-shadow);
   border: 1px solid var(--input-border);
   border-radius: 6px;
-  padding: 4px 0;
+  padding: 4px 8px;
   display: none;
   z-index: 1000;
+  overflow: hidden;
 }
 .session-menu-item {
   display: flex;
@@ -1275,4 +1304,280 @@ input[type=range]#numQuestions::-moz-range-thumb {
 html.dark .chat-input-container {
   border: none !important;
 }
+
+/* === Dropdown items unified reset and hover === */
+.dropdown-menu button.dropdown-item,
+.dropdown-menu a.dropdown-item {
+  background: none !important;
+  border: none !important;
+  display: block;
+  margin: 4px 0 !important;
+  padding: 8px 12px !important;
+  text-align: left;
+  color: var(--link-color) !important;
+}
+.dropdown-menu button.dropdown-item:hover,
+.dropdown-menu a.dropdown-item:hover,
+.dropdown-menu button.dropdown-item:focus,
+.dropdown-menu a.dropdown-item:focus {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  outline: none !important;
+}
+/* === End unified dropdown override === */
+
+/* Settings Modal close button override */
+.modal-content .close-btn {
+  background: transparent !important;
+  border: none !important;
+}
+.modal-content .close-btn:hover,
+.modal-content .close-btn:focus {
+  background: transparent !important;
+  outline: none !important;
+}
+
+/* Settings dropdown button styling */
+.dropdown-menu button.dropdown-item#settingsBtn {
+  background: none !important;
+  border: none !important;
+}
+.dropdown-menu button.dropdown-item#settingsBtn:hover {
+  background: var(--button-bg) !important;
+  color: var(--button-color) !important;
+}
+
+/* === Neutral grey overlay on dropdown-item hover === */
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu button.dropdown-item:hover,
+.dropdown-menu a.dropdown-item:hover {
+  background-color: rgba(0,0,0,0.1) !important;
+  filter: none !important;
+  background-image: none !important;
+  color: var(--text-color) !important;
+}
+/* === End neutral overlay override === */
+
+/* Settings Modal close button override */
+.modal-content .close-btn {
+  background: transparent !important;
+  border: none !important;
+}
+.modal-content .close-btn:hover,
+.modal-content .close-btn:focus {
+  background: transparent !important;
+  outline: none !important;
+}
+
+/* Settings dropdown button styling */
+.dropdown-menu button.dropdown-item#settingsBtn {
+  background: none !important;
+  border: none !important;
+}
+.dropdown-menu button.dropdown-item#settingsBtn:hover {
+  background: var(--button-bg) !important;
+  color: var(--button-color) !important;
+}
+
+/* === Force opaque white hover on settings/logout menu items === */
+.dropdown-menu button.dropdown-item:hover,
+.dropdown-menu a.dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  background-image: none !important;
+  filter: none !important;
+  color: var(--text-color) !important;
+}
+/* === End override === */
+
+/* === Force opaque white background on all dropdown-item hover, override defaults === */
+.dropdown-menu .dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  filter: none !important;
+  color: var(--text-color) !important;
+}
+/* === End dropdown-item hover override === */
+
+/* === Strong override for all dropdown-menu button hovers === */
+.menu-bar .dropdown-menu button.dropdown-item:hover,
+.menu-bar .dropdown-menu a.dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  filter: none !important;
+  background-image: none !important;
+  color: var(--text-color) !important;
+}
+/* === End strong override === */
+
+/* === Ultimate override for dropdown hover to ensure opaque white highlight === */
+.menu-bar .dropdown-menu button.dropdown-item:hover,
+.menu-bar .dropdown-menu a.dropdown-item:hover,
+.dropdown-menu button:hover,
+.dropdown-menu a:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  filter: none !important;
+  color: var(--text-color) !important;
+}
+/* === End ultimate override === */
+
+/* === Force Settings button hover to opaque grey === */
+#settingsBtn.dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  filter: none !important;
+  color: var(--text-color) !important;
+}
+/* === End Settings hover override === */
+
+/* === Settings button hover styling === */
+#settingsBtn:hover {
+  filter: none !important;
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+}
+/* === End Settings button hover styling === */
+
+/* === Override dropdown button hover filter to none === */
+.dropdown-menu button:hover {
+  /* no filter to avoid unwanted dimming */
+  filter: none !important;
+}
+
+/* === Force dropdown-item hover background to light grey === */
+.dropdown-menu .dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+}
+/* === End dropdown hover overrides === */
+
+/* === Remove generic filter on dropdown buttons === */
+.dropdown-menu button:hover {
+  /* no filter to avoid unwanted dimming */
+  filter: none !important;
+}
+
+/* === Specific hover for Settings and Logout items === */
+.dropdown-menu .dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  filter: none !important;
+  color: var(--text-color) !important;
+}
+/* === End dropdown hover cleanup === */
+
+/* === Settings button ultra-specific hover/active/focus override === */
+#settingsBtn.dropdown-item:hover,
+#settingsBtn.dropdown-item:focus,
+#settingsBtn.dropdown-item:active {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  outline: none !important;
+}
+/* === End Settings button override === */
+
+/* === Dropdown button focus and active override === */
+.dropdown-menu button.dropdown-item:focus,
+.dropdown-menu button.dropdown-item:active {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  outline: none !important;
+}
+/* === End focus/active override === */
+
+/* === Force neutral dropdown-item backgrounds === */
+.dropdown-menu .dropdown-item {
+  background-color: transparent !important;
+  filter: none !important;
+}
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+}
+/* === End dropdown-item neutral override === */
+
+/* =====================
+   Final dropdown hover override
+   ===================== */
+.menu-bar .dropdown-menu > *:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  background-image: none !important;
+}
+/* End final override */
+
+/* === Ultimate dropdown-item hover override for light & dark === */
+html.dark .dropdown-menu .dropdown-item:hover,
+html:not(.dark) .dropdown-menu .dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+}
+/* === End ultimate override === */
+
+/* ===============================
+Override dropdown hover for zero-blue
+=============================== */
+.menu-bar .dropdown-menu .dropdown-item:hover,
+.menu-bar .dropdown-menu button.dropdown-item:hover,
+.menu-bar .dropdown-menu a.dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  background-image: none !important;
+}
+/* ===============================
+End zero-blue hover override
+=============================== */
+
+/* ================================================ */
+/* Final override: neutral hover for Settings & Logout */
+.menu-bar .dropdown-menu button#settingsBtn:hover,
+.menu-bar .dropdown-menu a.dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  background-image: none !important;
+}
+/* ================================================ */
+
+/* === Settings & Logout Hover Force === */
+.dropdown-menu button#settingsBtn:hover,
+.dropdown-menu .dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+}
+/* === End Hover Force === */
+
+/* ===============================
+Final dropdown-item & button hover override
+Ensures no blue background shows
+=============================== */
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu button.dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  background-image: none !important;
+}
+/* ===============================
+End final override
+=============================== */
+
+/* === Ultimate dropdown anchor hover override === */
+.menu-bar .dropdown-menu a.dropdown-item:hover {
+  background-color: rgba(255,255,255,0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  background-image: none !important;
+}
+/* === End ultimate anchor hover override === */
+
+/* --- Rounded highlight on dropdown-item hover --- */
+.dropdown-menu button.dropdown-item:hover,
+.dropdown-menu a.dropdown-item:hover {
+  border-radius: 4px !important;
+}
+/* --- End rounded highlight override --- */
 

@@ -205,9 +205,9 @@
 			const lineH = parseFloat(style.lineHeight);
 			const pad = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
 			const minH = lineH * 2 + pad;
-			const maxH = lineH * 8 + pad;
+			const maxH = Math.ceil(lineH * 8 + pad);
 			chatInput.style.height = minH + 'px';
-			chatInput.style.overflowY = 'hidden';
+			chatInput.style.setProperty('overflow-y', 'hidden', 'important');
 			chatInput.addEventListener('input', () => {
 				// reset to minimum height before measuring
 				chatInput.style.height = minH + 'px';
@@ -216,10 +216,10 @@
 				if (h > minH) {
 					if (h > maxH) {
 						chatInput.style.height = maxH + 'px';
-						chatInput.style.overflowY = 'auto';
+						chatInput.style.setProperty('overflow-y', 'auto', 'important');
 					} else {
 						chatInput.style.height = h + 'px';
-						chatInput.style.overflowY = 'hidden';
+						chatInput.style.setProperty('overflow-y', 'hidden', 'important');
 					}
 				}
 			});
@@ -486,6 +486,9 @@
 			});
 		});
 	</script>
+	<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+	<!-- Add custom scrollbar script -->
+	<script src="{{ url_for('static', filename='js/scrollbar.js') }}"></script>
 </body>
 </html>
 

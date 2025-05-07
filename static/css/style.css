@@ -373,13 +373,47 @@ html.dark .menu-bar-wrapper {
 /* Textarea auto-resize and scrollable */
 textarea.form-control {
   width: 90%;
+  min-width: 0;
   max-width: 100%;
   display: block;
   margin: 0 auto 16px;
-  resize: none;
+  resize: vertical;
+  height: 200px;
   min-height: 50px;
-  max-height: 200px;
-  overflow-y: hidden;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  scrollbar-color: #bdbdbd #f7f7fa;
+  background: #222;
+}
+textarea.form-control::-webkit-scrollbar {
+  width: 8px;
+  background: #f7f7fa;
+}
+textarea.form-control::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+textarea.form-control::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+textarea.form-control::-webkit-scrollbar-track {
+  background: #f7f7fa;
+  border-radius: 8px;
+}
+html.dark textarea.form-control {
+  background: #222;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+html.dark textarea.form-control::-webkit-scrollbar-thumb {
+  background: #444;
+}
+html.dark textarea.form-control::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+html.dark textarea.form-control::-webkit-scrollbar-track {
+  background: #222;
 }
 
 /* Layout: sidebar and main content for sessions */
@@ -536,22 +570,36 @@ textarea.form-control {
 
 /* Style dropdown items and hover effect */
 .dropdown-menu .dropdown-item {
-  display: block;
-  margin: 4px 0 !important;
-  padding: 8px 12px !important;
-  color: var(--link-color) !important;
-  text-decoration: none;
-  border-radius: 4px;
   background: transparent !important;
-  transition: none !important;
+  border: none !important;
+  color: var(--text-color) !important;
+  padding: 8px 12px !important;
+  margin: 4px 0 !important;
+  border-radius: 4px !important;
+  transition: background-color 0.2s ease !important;
 }
-/* Force neutral overlay on hover/focus */
+
 .dropdown-menu .dropdown-item:hover,
-.dropdown-menu .dropdown-item:focus,
-.dropdown-menu .dropdown-item:active {
-  background-color: rgba(255,255,255,0.15) !important;
+.dropdown-menu button.dropdown-item:hover,
+.dropdown-menu a.dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
   color: var(--text-color) !important;
   filter: none !important;
+  background-image: none !important;
+  outline: none !important;
+}
+
+/* Remove any existing hover styles */
+.dropdown-menu .dropdown-item:active,
+.dropdown-menu button.dropdown-item:active,
+.dropdown-menu a.dropdown-item:active,
+.dropdown-menu .dropdown-item:focus,
+.dropdown-menu button.dropdown-item:focus,
+.dropdown-menu a.dropdown-item:focus {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: var(--text-color) !important;
+  filter: none !important;
+  outline: none !important;
 }
 
 /* Remove legacy brightness filter on dropdown buttons */
@@ -876,30 +924,102 @@ html.dark .explanation {
   background: var(--container-bg);
   border-radius: 8px;
   margin-bottom: 1rem;
-  overflow: hidden; /* clip overlay to container bounds */
+  overflow-x: hidden; /* hide horizontal overflow */
+  overflow-y: visible !important; /* allow vertical scrollbars */
 }
 .chat-input-container textarea {
-  line-height: 1.5em;
-  width: 100%;
-  padding: 0.6rem 2.5rem 0.6rem 0.6rem;
+  /* overflow controlled by JS; no forced override */
+  max-height: calc(8 * 1.5em + 1.2rem);
+  /* let JS toggle overflow; default hidden */
+  overflow-y: hidden;
+  width: 100% !important;
+  padding: 0.6rem 2rem 0.6rem 0.6rem !important; /* room for + button and scrollbar */
   border: none;
   border-radius: 8px;
   background: transparent;
   resize: none;
-  overflow-y: auto;
-  max-height: calc(8 * 1.5em + 1.2rem);
   box-sizing: border-box;
+  line-height: 1.5em;
 }
-.chat-input-container textarea:focus {
-  outline: none;
+
+/* === Chat Input Custom Scrollbar (Final Override) === */
+.chat-input-container {
+  overflow: hidden !important;
 }
+.chat-input-container textarea {
+  /* overflow controlled by JS; no forced override */
+}
+.chat-input-container .custom-scrollbar-track {
+  position: absolute;
+  right: calc(0.5rem + 37px) !important;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  width: 8px;
+  background: transparent;
+  pointer-events: auto !important;
+  z-index: 2;
+}
+.chat-input-container .custom-scrollbar-thumb {
+  position: absolute;
+  right: calc(0.5rem + 37px) !important;
+  width: 8px;
+  background-color: #e0e0e0 !important;
+  border-radius: 4px;
+  pointer-events: auto !important;
+  z-index: 2;
+}
+html.dark .chat-input-container .custom-scrollbar-thumb {
+  background-color: #888888 !important;
+}
+/* === End Custom Scrollbar Override === */
+
+/* === Enable pointer events for custom scrollbar === */
+.chat-input-container .custom-scrollbar-track,
+.chat-input-container .custom-scrollbar-thumb {
+  pointer-events: auto !important;
+  z-index: 2;
+}
+/* === End pointer-events override === */
+
+/* chat-input-container textarea: native scrollbars appear only when overflow (content > max-height) */
+.chat-input-container textarea {
+  max-height: calc(8 * 1.5em + 1.2rem);
+  /* let JS toggle overflow; default hidden */
+  overflow-y: hidden;
+  width: 100% !important;
+  padding: 0.6rem 2rem 0.6rem 0.6rem !important; /* room for + button and scrollbar */
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  resize: none;
+  box-sizing: border-box;
+  line-height: 1.5em;
+}
+
+/* Customize the native scrollbar */
+.chat-input-container textarea::-webkit-scrollbar {
+  width: 8px;
+}
+.chat-input-container textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-input-container textarea::-webkit-scrollbar-thumb {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+@supports (scrollbar-width: thin) {
+  .chat-input-container textarea {
+    scrollbar-width: thin;
+    scrollbar-color: #e0e0e0 transparent;
+  }
+}
+
 .upload-btn {
   position: absolute;
   top: 0;
   bottom: 0;
   right: 0.5rem;
-  margin-top: auto;
-  margin-bottom: auto;
+  margin: auto;
   width: 32px;
   height: 32px;
   background: var(--button-bg);
@@ -1580,4 +1700,76 @@ End final override
   border-radius: 4px !important;
 }
 /* --- End rounded highlight override --- */
+
+/* === Chat Input Custom Scrollbar (Final Override) === */
+.chat-input-container {
+  overflow: hidden !important;
+}
+.chat-input-container textarea {
+  /* overflow controlled by JS; no forced override */
+}
+.chat-input-container .custom-scrollbar-track {
+  position: absolute;
+  right: calc(0.5rem + 37px) !important;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  width: 8px;
+  background: transparent;
+  pointer-events: auto !important;
+  z-index: 2;
+}
+.chat-input-container .custom-scrollbar-thumb {
+  position: absolute;
+  right: calc(0.5rem + 37px) !important;
+  width: 8px;
+  background-color: #e0e0e0 !important;
+  border-radius: 4px;
+  pointer-events: auto !important;
+  z-index: 2;
+}
+html.dark .chat-input-container .custom-scrollbar-thumb {
+  background-color: #888888 !important;
+}
+/* === End Custom Scrollbar Override === */
+
+/* === Enable pointer events for custom scrollbar === */
+.chat-input-container .custom-scrollbar-track,
+.chat-input-container .custom-scrollbar-thumb {
+  pointer-events: auto !important;
+  z-index: 2;
+}
+/* === End pointer-events override === */
+
+/* chat-input-container textarea: native scrollbars appear only when overflow (content > max-height) */
+.chat-input-container textarea {
+  max-height: calc(8 * 1.5em + 1.2rem);
+  /* let JS toggle overflow; default hidden */
+  overflow-y: hidden;
+  width: 100% !important;
+  padding: 0.6rem 2rem 0.6rem 0.6rem !important; /* room for + button and scrollbar */
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  resize: none;
+  box-sizing: border-box;
+  line-height: 1.5em;
+}
+
+/* Customize the native scrollbar */
+.chat-input-container textarea::-webkit-scrollbar {
+  width: 8px;
+}
+.chat-input-container textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-input-container textarea::-webkit-scrollbar-thumb {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+@supports (scrollbar-width: thin) {
+  .chat-input-container textarea {
+    scrollbar-width: thin;
+    scrollbar-color: #e0e0e0 transparent;
+  }
+}
 

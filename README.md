@@ -60,7 +60,7 @@ quizpro/
 3. **Install Dependencies**
    ```bash
    cd backend
-   pip install -r requirements.txt
+   pip install -r reqs.txt
    ```
 4. **Configure Environment**
    - Copy or create `backend/.env`:

@@ -72,7 +72,7 @@ quizpro/
      ```
 5. **Run the App**
    ```bash
-   python app.py
+   flask --app backend.app run --reload
    ```
 6. **Open in Browser**
    Visit [http://127.0.0.1:5000](http://127.0.0.1:5000) and register/login to begin!

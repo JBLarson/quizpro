@@ -93,7 +93,3 @@ quizpro/
 - **Analytics Dashboard**: Visualize progress and topic accuracy over time.
 - **Mobile App Integration**: Turn QuizPro into a native or PWA mobile experience.
 - **Dockerization**: Provide Dockerfile & docker-compose for one-click deployment.
-
----
-
-**Happy quizzing!** 📝

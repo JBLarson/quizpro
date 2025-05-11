@@ -48,7 +48,7 @@ quizpro/
 ## 🛠️ Installation & Setup
 1. **Clone the Repo**
    ```bash
-   git clone https://github.com/<your-username>/quizpro.git
+   git clone https://github.com/jblarson/quizpro.git
    cd quizpro
    ```
 2. **Create & Activate venv**

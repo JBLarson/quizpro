@@ -26,7 +26,8 @@
 }
 
 .login-form input {
-    width: 100%;
+    display: flex;
+    width: 93%; /* same width as login button */
     padding: 8px 10px;
     margin-top: 4px;
     border: 1px solid #ccc;

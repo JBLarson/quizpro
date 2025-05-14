@@ -1,0 +1,19 @@
+.dashboard-container {
+  width: 100%;
+  background: var(--container-bg);
+  color: var(--text-color);
+  border-radius: 8px;
+  box-shadow: var(--container-shadow);
+  margin: 0 auto;
+  text-align: center;
+  margin-top: 50px;
+}
+
+.dashboard-container h2 {
+  margin-bottom: 16px;
+}
+
+.dashboard-container p {
+  font-size: 14px;
+  line-height: 1.5;
+}

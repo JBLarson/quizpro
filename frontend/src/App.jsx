@@ -10,9 +10,9 @@ export default function App() {
   return (
     <div className="page-container">
       <Routes>
-        <Route path="/"        element={<Setup />} />
+        <Route path="/"        element={<Dashboard />} />
         <Route path="/login"        element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/setup" element={<Setup />} />
         <Route path="/quiz"    element={<QuizPage />} />
       </Routes>
     </div>

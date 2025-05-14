@@ -113,10 +113,45 @@ def get_user_api_key(model_name="gemini"):
 # --------------------------------
 
 
+# in your app initialization, before any routes
+@login_manager.unauthorized_handler
+def return_401_for_api():
+    if request.path.startswith('/api/'):
+        return jsonify(success=False, message="Not logged in"), 401
+    return redirect(login_manager.login_view)
+
+
+
 @app.route('/api/ping', methods=['GET'])
 def ping():
     return jsonify(message="pong")
 
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json() or {}
+    email = data.get('email','')
+    pw    = data.get('password','')
+    user = User.query.filter_by(email=email).first()
+    if not user or not user.check_password(pw):
+        return jsonify(success=False, message="Invalid email or password"), 401
+
+    login_user(user)
+    return jsonify(success=True), 200
+
+
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def api_logout():
+    logout_user()
+    return jsonify(success=True), 200
+
+# method to return the current user's email
+@app.route('/api/user', methods=['GET'])
+def api_user():
+    if not current_user.is_authenticated:
+        return jsonify(logged_in=False), 200
+    return jsonify(logged_in=True, email=current_user.email), 200
 
 
 @app.route('/api/quiz/start', methods=['POST'])

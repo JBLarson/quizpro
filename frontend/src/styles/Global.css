@@ -35,12 +35,12 @@ html, body {
 .page-container {
   width: 60%;
   height: 90%;
-  padding: 20px;
+  padding: 0px;
   background: var(--bg-color);
   color: var(--text-color);
   border-radius: 8px;
   box-shadow: var(--container-shadow);
-
+  /*top: 60px;  push page content below fixed menu */
   position: absolute;
   top: 50%;
   left: 50%;
@@ -59,3 +59,59 @@ html, body {
   margin-bottom: 8px;
   font-size: 14px;
 }
+
+/*
+-------------------
+Global menu styling
+-------------------
+*/
+
+.global-menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--container-bg);
+  box-shadow: var(--container-shadow);
+  padding: 1vw 0 1vw 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.global-menu .menu-brand {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.global-menu .menu-list {
+  display: flex;
+  gap: 1rem;
+}
+
+.global-menu .menu-list a,
+.global-menu .menu-list button {
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.global-menu .menu-list a:hover,
+.global-menu .menu-list button:hover {
+  background: var(--button-bg);
+  color: var(--button-color);
+}
+
+.global-menu .menu-user {
+  margin-left: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+

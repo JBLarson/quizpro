@@ -1,4 +1,13 @@
 
+.setup-card {
+  margin-top: 4vw;
+  padding: 0vw 2vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
 /* selects, inputs, textarea, range */
 .setup-card select,
 .setup-card input[type="file"],

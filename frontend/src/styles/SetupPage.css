@@ -1,0 +1,56 @@
+/* ensure full‑page context */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* center the card absolutely */
+.setup-card {
+  width: 360px;
+  padding: 20px;
+  background: #1f1f1f;
+  color: #eee;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+.setup-card h2 {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.setup-card label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.setup-card input[type="file"],
+.setup-card textarea,
+.setup-card input[type="range"] {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #eee;
+}
+.setup-card button {
+  width: 100%;
+  padding: 10px;
+  background: #0078d4;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+.setup-card button:hover {
+  background: #005fa3;
+}
+

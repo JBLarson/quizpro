@@ -1,12 +1,18 @@
 import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+
+import SetupPage from './pages/SetupPage';
+import QuizPage   from './pages/QuizPage';
+import Dashboard  from './pages/Dashboard';
 
 export default function App() {
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold text-red-500">
-        Hello Tailwind!
-      </h1>
+      <Routes>
+        <Route path="/"        element={<SetupPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/quiz"    element={<QuizPage />} />
+      </Routes>
     </div>
   );
 }
-

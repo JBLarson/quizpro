@@ -19,6 +19,8 @@ from .extensions import db, migrate, login_manager  # Initialize DB, migrations,
 from flask_admin import Admin  # Admin UI for managing models
 from flask_admin.contrib.sqla import ModelView  # SQLAlchemy views for admin
 from flask_login import login_user, logout_user, current_user, login_required  # User session management
+from flask import jsonify  # JSON response helper
+from flask import request  # API lib
 from .models import User, ApiKey, QuizSession, QuizQuestion, ChatMessage  # ORM models
 from .parser_pptx_json import pptx_to_json  # PPTX parsing utility
 from .parser_pdf_text import pdf_to_text  # PDF parsing utility
@@ -99,6 +101,63 @@ def get_user_api_key(model_name="gemini"):
         flash(f"No API key saved for '{model_name}'. Please add one under Setup.", "error")
         return None
     return record.key
+
+
+
+
+
+
+
+# --------------------------------
+# Routes to Frontend
+# --------------------------------
+
+
+@app.route('/api/ping', methods=['GET'])
+def ping():
+    return jsonify(message="pong")
+
+
+
+@app.route('/api/quiz/start', methods=['POST'])
+@login_required
+def api_quiz_start():
+    # read options from client
+    data = request.get_json() or {}
+    num_questions = data.get('numQuestions', 20)
+    question_type = data.get('questionType', 'multiple_choice')
+
+    # for now we’ll just hard‐code an empty content string
+    content_str = ""  
+    # you’ll want to extend this to accept uploaded files or text
+
+    # build a simple prompt
+    prompt = (
+        "Give me exactly "
+        f"{num_questions} { 'multiple‑choice' if question_type=='multiple_choice' else 'free‑response' } "
+        f"questions from this content: {content_str}. "
+        "Return JSON array of {prompt, options, answer} objects."
+    )
+
+    # call your existing helper
+    api_key = app.config['GEMINI_API_KEY']
+    raw = generate_questions(api_key, 'gemini', prompt)
+
+    # placeholder: parse raw into a JSON array yourself
+    # for now just return the raw text
+    return jsonify({ 'raw': raw })
+
+
+
+
+
+
+
+
+
+
+
+
 
 # --------------------------------
 # Authentication Routes

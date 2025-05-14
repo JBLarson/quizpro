@@ -1,7 +1,8 @@
 // src/pages/SetupPage.jsx
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import '../styles/SetupPage.css'
+import '../styles/Global.css'
+import '../styles/Setup.css'
 
 const MODELS = ['Gemini', 'OpenAI', 'Deepseek']
 const TYPES  = ['Multiple-Choice', 'Free-Response']
@@ -35,6 +36,7 @@ export default function SetupPage() {
 
   return (
     <div className="setup-card">
+
       <h2>Setup Your Quiz</h2>
       <form onSubmit={handleSubmit}>
         {/* Model pills */}
@@ -98,6 +100,6 @@ export default function SetupPage() {
 
         <button type="submit">Generate Quiz</button>
       </form>
-    </div>
+  </div>
   )
 }

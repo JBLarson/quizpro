@@ -1,0 +1,61 @@
+:root {
+  --bg-color: #f7f7fa;
+  --text-color: #333333;
+  --container-bg: #ffffff;
+  --container-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  --button-bg: #4f8cff;
+  --button-color: #ffffff;
+  --button-disabled-bg: #cccccc;
+  --input-border: #cccccc;
+  --card-bg: #fafbfc;
+}
+
+.dark {
+  --bg-color: #121212;
+  --text-color: #e4e4e4;
+  --container-bg: #1e1e1e;
+  --container-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  --button-bg: #4f8cff;
+  --button-color: #ffffff;
+  --button-disabled-bg: #555555;
+  --input-border: #444444;
+  --card-bg: #212121;
+}
+
+/* Reset & base */
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: Arial, sans-serif;
+}
+
+/* Centered card container */
+.page-container {
+  width: 60%;
+  height: 90%;
+  padding: 20px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  border-radius: 8px;
+  box-shadow: var(--container-shadow);
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* heading */
+.page-container h2 {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* labels */
+.page-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}

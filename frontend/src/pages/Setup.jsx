@@ -1,95 +1,60 @@
 // src/pages/SetupPage.jsx
-import React, { useState, useEffect, useRef } from 'react'; // Added useRef
-import { NavLink, useNavigate } from 'react-router-dom'; // Changed Link to NavLink
-import '../styles/Global.css';
-import '../styles/Setup.css';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+// Removed NavLink and menu-specific imports as GlobalMenu handles navigation
+import { FaFileUpload, FaPaperPlane, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'; // Icons for form elements
 
+import '../styles/Global.css'; // Still needed for global variables and .page-container
+import '../styles/Setup.css';  // Page-specific styles we will overhaul
+
+// Constants for models and types
 const MODELS = ['Gemini', 'OpenAI', 'Deepseek'];
-const TYPES  = ['Multiple-Choice', 'Free-Response'];
-
-// Simple Caret Down Icon (Copied from Dashboard.jsx)
-// Ideally, this would be a shared component
-const CaretDownIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px', transition: 'transform 0.2s ease-in-out' }}>
-    <polyline points="6 9 12 15 18 9"></polyline>
-  </svg>
-);
+const TYPES = ['Multiple-Choice', 'Free-Response'];
 
 export default function SetupPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // Added state for dropdown
-  const userMenuRef = useRef(null); // Added ref for dropdown
 
-  // Fetch current user for menu
-  useEffect(() => {
-    fetch('/api/user', {
-      credentials: 'include',
-      headers: { Accept: 'application/json' }
-    })
-      .then(async (res) => { // Added async
-        if (!res.ok) { // Check if response is ok
-          throw new Error("Network error fetching user");
-        }
-        const data = await res.json();
-        if (data.logged_in) {
-          setUser({ email: data.email }); // Ensure user state matches expected structure
-        } else {
-          navigate('/login');
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch user:", err); // Log error
-        navigate('/login');
-      });
-  }, [navigate]);
-
-  // Close dropdown if clicked outside (Copied from Dashboard.jsx)
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  // Logout handler
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      setUser(null); // Clear user state
-      setIsUserMenuOpen(false); // Close dropdown
-      navigate('/login');
-    } catch (err) {
-        console.error("Logout failed:", err); // Log error
-    }
-  };
-
-  // Toggle user menu visibility (Copied from Dashboard.jsx)
-  const toggleUserMenu = () => {
-    setIsUserMenuOpen(!isUserMenuOpen);
-  };
-
-  // Quiz setup state
-  const [model, setModel]               = useState('Gemini');
-  const [questionType, setQuestionType] = useState('Multiple-Choice');
+  // Quiz setup state - this is the core state for this page
+  const [model, setModel] = useState(MODELS[0]);
+  const [questionType, setQuestionType] = useState(TYPES[0]);
   const [numQuestions, setNumQuestions] = useState(20);
-  const [files, setFiles]               = useState([]);
-  const [text, setText]                 = useState('');
+  const [files, setFiles] = useState([]); // Store File objects
+  const [fileNames, setFileNames] = useState([]); // Store just names for display
+  const [text, setText] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // For loading state on submit
+  const [error, setError] = useState(''); // For displaying submission errors
 
-  const handleSubmit = async e => {
+  // Effect to update fileNames when files change
+  useEffect(() => {
+    setFileNames(files.map(file => file.name));
+  }, [files]);
+
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    // You might want to add validation for file types or number of files here
+    setFiles(selectedFiles);
+    // Clear the input value so the same file can be selected again if removed
+    e.target.value = null; 
+  };
+
+  const removeFile = (fileNameToRemove) => {
+    setFiles(prevFiles => prevFiles.filter(file => file.name !== fileNameToRemove));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(''); // Clear previous errors
+
+    if (files.length === 0 && text.trim() === '') {
+        setError('Please provide content by pasting text or uploading files.');
+        setIsLoading(false);
+        return;
+    }
+
     const formData = new FormData();
-    // Ensure files is always an array before calling forEach
-    if (files && files.length > 0) {
-        files.forEach(f => formData.append('contentFiles', f));
+    if (files.length > 0) {
+      files.forEach(f => formData.append('contentFiles', f));
     }
     formData.append('pastedText', text);
     formData.append('modelSelect', model.toLowerCase());
@@ -100,144 +65,160 @@ export default function SetupPage() {
     formData.append('numQuestions', numQuestions);
 
     try {
-        const response = await fetch('/api/quiz/start', {
-          method: 'POST',
-          credentials: 'include',
-          body: formData
-        });
-        if (!response.ok) {
-            throw new Error(`Quiz start failed with status: ${response.status}`)
-        }
-        navigate('/quiz');
-    } catch (error) {
-        console.error("Error starting quiz:", error);
-        // Potentially show an error message to the user
+      const response = await fetch('/api/quiz/start', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        // Try to get error message from backend if available
+        const errorData = await response.json().catch(() => ({ message: `Quiz start failed with status: ${response.status}` }));
+        throw new Error(errorData.message || `Quiz start failed with status: ${response.status}`);
+      }
+      // Assuming successful response means quiz started
+      navigate('/quiz');
+    } catch (err) {
+      console.error("Error starting quiz:", err);
+      setError(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <>
-      {/* global menu - Copied from Dashboard.jsx */}
-      <nav className="global-menu">
-        <div className="menu-brand">QuizPro</div>
-        <div className="menu-list">
-          <NavLink
-            to="/"
-            className={({ isActive }) => (isActive ? "menu-link active" : "menu-link")}
-            end
-          >
-            Dashboard
-          </NavLink>
-          <NavLink
-            to="/setup"
-            className={({ isActive }) => (isActive ? "menu-link active" : "menu-link")}
-          >
-            Setup
-          </NavLink>
-        </div>
-        <div className="menu-user-section" ref={userMenuRef}>
-          {user && (
-            <button onClick={toggleUserMenu} className="user-menu-trigger" aria-expanded={isUserMenuOpen}>
-              <span>{user.email}</span>
-              <CaretDownIcon />
-            </button>
-          )}
-          {isUserMenuOpen && user && (
-            <div className="user-dropdown-menu">
-              <button onClick={handleLogout} className="dropdown-item logout-button">
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+    // The GlobalMenu is rendered by Layout.jsx, which wraps this component via App.jsx
+    <div className="page-container">
+      <div className="setup-card">
+        <header className="setup-header">
+          <h1>Create Your Quiz</h1>
+          <p>Configure the options below to generate a personalized quiz.</p>
+        </header>
 
-      {/*
-        IMPORTANT: The main content container needs to respect the fixed navbar.
-        In Global.css, we added `padding-top: var(--navbar-height);` to `body`
-        and styled `.page-container`.
-        Ensure your `.setup-card` or its parent wrapper is styled similarly to `.page-container`
-        or that `.setup-card` is a child of a `.page-container` div.
+        <form onSubmit={handleSubmit} className="quiz-setup-form">
+          {error && <div className="form-error-message"><FaTimesCircle /> {error}</div>}
 
-        Option 1: Wrap with .page-container
-        <div className="page-container">
-            <div className="setup-card"> ... your form ... </div>
-        </div>
-
-        Option 2: Add .page-container class to setup-card (if it's the main full-page block)
-        <div className="setup-card page-container"> ... your form ... </div>
-
-        For now, I'll assume Option 1 for clarity, as .page-container has specific centering.
-      */}
-      <div className="page-container"> {/* Added page-container wrapper */}
-        <div className="setup-card">
-          <h2>Setup Your Quiz</h2>
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="model-select">Model:</label> {/* Added htmlFor */}
-            <div className="pill-group" id="model-select">
+          {/* Model Selection */}
+          <div className="form-section">
+            <label htmlFor="model-select" className="form-label">Choose AI Model</label>
+            <div className="pill-group" id="model-select" role="radiogroup" aria-labelledby="model-select-label">
               {MODELS.map(m => (
-                <div
+                <button
+                  type="button"
                   key={m}
-                  role="button" // Add role for accessibility
-                  tabIndex={0}  // Add tabIndex for keyboard navigation
+                  role="radio"
+                  aria-checked={model === m}
                   className={`pill${model === m ? ' selected' : ''}`}
                   onClick={() => setModel(m)}
-                  onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? setModel(m) : null} // Keyboard accessibility
                 >
+                  {/* Optional: Add icons for models if you have them */}
                   {m}
-                </div>
+                </button>
               ))}
             </div>
+          </div>
 
-            <label htmlFor="question-type-select">Question Type:</label> {/* Added htmlFor */}
-            <div className="pill-group" id="question-type-select">
+          {/* Question Type Selection */}
+          <div className="form-section">
+            <label htmlFor="question-type-select" className="form-label">Select Question Type</label>
+            <div className="pill-group" id="question-type-select" role="radiogroup" aria-labelledby="question-type-label">
               {TYPES.map(t => (
-                <div
+                <button
+                  type="button"
                   key={t}
-                  role="button"
-                  tabIndex={0}
+                  role="radio"
+                  aria-checked={questionType === t}
                   className={`pill${questionType === t ? ' selected' : ''}`}
                   onClick={() => setQuestionType(t)}
-                  onKeyDown={(e) => e.key === 'Enter' || e.key === ' ' ? setQuestionType(t) : null}
                 >
                   {t}
-                </div>
+                </button>
               ))}
             </div>
+          </div>
 
-            <label htmlFor="num-questions-range"> {/* Added htmlFor */}
-              Number of Questions: {numQuestions}
+          {/* Number of Questions */}
+          <div className="form-section">
+            <label htmlFor="num-questions-range" className="form-label">
+              Number of Questions: <span className="num-questions-value">{numQuestions}</span>
             </label>
             <input
-              id="num-questions-range" /* Added id */
+              id="num-questions-range"
               type="range"
               min="1"
               max="50"
               value={numQuestions}
-              onChange={e => setNumQuestions(e.target.value)}
+              onChange={e => setNumQuestions(parseInt(e.target.value, 10))}
+              className="range-slider"
             />
+          </div>
+          
+          {/* Content Input Method Tabs (Optional Enhancement) */}
+          {/* For simplicity, we'll keep them separate for now, but tabs could be a future step */}
 
-            <label htmlFor="paste-text-area">Paste Text:</label> {/* Added htmlFor */}
+          {/* Paste Text Section */}
+          <div className="form-section">
+            <label htmlFor="paste-text-area" className="form-label">Paste Your Content</label>
             <textarea
-              id="paste-text-area" /* Added id */
+              id="paste-text-area"
               value={text}
               onChange={e => setText(e.target.value)}
-              placeholder="Paste content here..."
+              placeholder="Paste text from articles, notes, or documents here..."
+              className="text-input large"
+              rows="8"
             />
+          </div>
 
-            <label htmlFor="file-upload-input">Or Upload Files:</label> {/* Added htmlFor */}
+          {/* File Upload Section */}
+          <div className="form-section">
+            <label htmlFor="file-upload-input" className="form-label file-upload-label">
+              Or Upload Files
+              <span className="file-upload-button">
+                <FaFileUpload /> Select Files
+              </span>
+            </label>
             <input
-              id="file-upload-input" /* Added id */
+              id="file-upload-input"
               type="file"
-              accept=".pptx,.pdf,.docx,.xlsx"
+              accept=".pdf,.doc,.docx,.txt,.pptx" // Common text-based formats
               multiple
-              onChange={e => setFiles(Array.from(e.target.files))}
+              onChange={handleFileChange}
+              className="file-input-hidden" // Visually hide the default input
             />
-
-            <button type="submit" className="submit-button">Generate Quiz</button> {/* Added class for styling if needed */}
-          </form>
-        </div>
+            {fileNames.length > 0 && (
+              <div className="file-list">
+                <p>Selected files:</p>
+                <ul>
+                  {fileNames.map(name => (
+                    <li key={name}>
+                      <span>{name}</span>
+                      <button type="button" onClick={() => removeFile(name)} className="remove-file-btn" aria-label={`Remove ${name}`}>
+                        <FaTimesCircle />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="form-hint">Accepted formats: PDF, DOC, DOCX, TXT, PPTX. Max 5 files, 10MB each.</p>
+          </div>
+          
+          <div className="form-actions">
+            <button type="submit" className="submit-button primary-button" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <span className="spinner" role="status" aria-hidden="true"></span>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FaPaperPlane /> Generate Quiz
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
-    </>
+    </div>
   );
 }

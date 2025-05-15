@@ -1,69 +1,110 @@
-/* In Global.css */
+/* frontend/src/styles/Global.css */
 
-/* :root variables (ensure these are present and adjust as needed) */
 :root {
-  --navbar-height: 60px; /* Or 64px is also a common modern height */
-  --primary-accent-color: #4A90E2; /* A slightly more refined blue, adjust to your brand */
-  --primary-accent-text-color: #ffffff;
+  --navbar-height: 60px;
+  --primary-accent-color: #007AFF; /* A common, clean blue for accents */
+  --primary-accent-text-color: #FFFFFF;
+  --primary-accent-color-rgb: 0, 122, 255; /* RGB for the blue above */
+
+  --bg-color: #F4F5F7; /* Light grey for the overall page background */
+  --container-bg: #FFFFFF; /* White for cards and main content areas */
+  --text-color: #171A1F; /* Dark grey for primary text, not pure black */
+  --text-color-subtle: #5A6472; /* Lighter grey for secondary text, hints */
+  --text-color-nav: #333333; /* For nav text if different */
   
-  --text-color: #333333;
-  --text-color-subtle: #555555;
-  --text-color-nav: #484848; /* Slightly softer than pure black for nav text */
+  --border-color: #DCDFE4; /* Light border color */
+  --input-border-color: #CED4DA;
+  --input-focus-border-color: var(--primary-accent-color);
+  --input-focus-shadow: 0 0 0 3px rgba(var(--primary-accent-color-rgb), 0.2);
+  --input-bg: #FFFFFF;
+
+  --error-color: #D32F2F;
+  --error-color-rgb: 211, 47, 47;
+  --success-color: #28A745;
+  --success-color-rgb: 40, 167, 69;
+
+  --hover-bg-light: #E9ECEF; /* General light hover */
+  --dropdown-bg: var(--container-bg);
+  --dropdown-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  --dropdown-border-color: var(--border-color);
+  --dropdown-item-hover-bg: var(--hover-bg-light);
+
+  /* Variables for enhanced menu aesthetics (from previous steps) */
   --text-color-nav-hover: var(--primary-accent-color);
   --text-color-nav-active: var(--primary-accent-color);
-
-  --container-bg: #ffffff;
-  --border-color: #EAEAEA; /* Softer border color */
-  
-  --nav-link-hover-bg: rgba(74, 144, 226, 0.08); /* Subtle hover, matches accent */
-  --nav-link-active-bg: rgba(74, 144, 226, 0.12); /* Slightly more prominent active state */
-  
-  --nav-icon-color: #757575; /* Neutral icon color */
+  --nav-link-hover-bg: rgba(var(--primary-accent-color-rgb), 0.08);
+  --nav-link-active-bg: rgba(var(--primary-accent-color-rgb), 0.12);
+  --nav-icon-color: #757575;
   --nav-active-icon-color: var(--primary-accent-color);
-
-  --dropdown-bg: var(--container-bg);
-  --dropdown-shadow: 0 8px 24px rgba(0,0,0,0.12); /* Softer, more diffused shadow */
-  --dropdown-border-color: var(--border-color);
-  --dropdown-item-hover-bg: var(--nav-link-hover-bg);
-  --hover-bg-light: #f5f5f5; /* General light hover */
-
-  /* Define --primary-accent-color-rgb for rgba usage if not already defined */
-  --primary-accent-color-rgb: 74, 144, 226; /* For #4A90E2 */
 }
 
-.dark {
-  --text-color: #E0E0E0;
-  --text-color-subtle: #BDBDBD;
-  --text-color-nav: #D0D0D0;
-  --text-color-nav-hover: var(--primary-accent-color); /* Accent color can often stay the same */
-  --text-color-nav-active: var(--primary-accent-color);
 
-  --container-bg: #2C2C2C; /* Darker container */
-  --border-color: #424242;
-  
-  --nav-link-hover-bg: rgba(74, 144, 226, 0.15);
-  --nav-link-active-bg: rgba(74, 144, 226, 0.2);
-  
-  --nav-icon-color: #BDBDBD;
-  --nav-active-icon-color: var(--primary-accent-color);
-
-  --dropdown-bg: #333333;
-  --dropdown-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  --dropdown-border-color: var(--border-color);
-  --dropdown-item-hover-bg: var(--nav-link-hover-bg);
-  --hover-bg-light: #3A3A3A;
+/* Foundational HTML and Body Styles */
+html {
+  box-sizing: border-box;
+  height: 100%;
+  scroll-behavior: smooth;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
 }
 
-/* Global menu styling - ENHANCED */
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-color);
+  color: var(--text-color);
+  min-height: 100%;
+  padding-top: var(--navbar-height); 
+}
+
+/* Root container for React App */
+#root {
+  min-height: calc(100vh - var(--navbar-height));
+  /* display: flex; */ /* Uncomment if using flexbox for #root layout */
+  /* flex-direction: column; */ /* Uncomment if using flexbox for #root layout */
+}
+
+/* Site Wrapper (from App.jsx if used) */
+.site-wrapper {
+  width: 100%;
+  /* flex-grow: 1; */ /* Uncomment if #root is flex and this should grow */
+  /* display: flex; */ /* Uncomment if using flexbox for .site-wrapper layout */
+  /* flex-direction: column; */ /* Uncomment if using flexbox for .site-wrapper layout */
+}
+
+/* Main content wrapper (often <main> tag in Layout.jsx) */
+main {
+  display: block; /* Default for main, ensures block behavior */
+  width: 80vw;
+  margin-left: 10vw;
+}
+
+/* Page Container for Centered Content Cards */
+.page-container {
+  width: 90%;
+  max-width: 1000px;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 24px 32px;
+  background: var(--container-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Global Menu Styles (Enhanced) */
 .global-menu {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--container-bg);
-  /* Using a bottom border for a cleaner separation */
-  border-bottom: 1px solid var(--border-color); 
-  /* box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Optional: softer shadow if border isn't enough */
-  padding: 0 24px; /* Increased horizontal padding for more breathing room */
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 24px;
   height: var(--navbar-height);
   position: fixed;
   top: 0;
@@ -72,6 +113,209 @@
   z-index: 1000;
   box-sizing: border-box;
 }
+
+.menu-left-section {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; 
+  min-width: 0; 
+}
+
+.global-menu .menu-brand {
+  display: flex; 
+  align-items: center;
+  text-decoration: none;
+  margin-right: 24px; 
+  flex-shrink: 0; 
+}
+
+.logo-container {
+  position: relative;
+  width: 110px; 
+  height: calc(var(--navbar-height) - 20px); 
+  display: flex; 
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.logo-default { opacity: 1; }
+.logo-hover { opacity: 0; }
+.menu-brand:hover .logo-default { opacity: 0; }
+.menu-brand:hover .logo-hover { opacity: 1; }
+
+
+.global-menu .menu-links {
+  display: flex;
+  align-items: center;
+  gap: 8px; 
+  margin-left: 8px; 
+}
+
+.global-menu .menu-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;   
+  padding: 10px 16px; 
+  border-radius: 6px; 
+  font-size: 14px; 
+  font-weight: 500; 
+  color: var(--text-color-nav);
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  position: relative;
+  white-space: nowrap; 
+}
+
+.global-menu .menu-link .menu-link-icon {
+  font-size: 18px; 
+  color: var(--nav-icon-color); 
+  transition: color 0.2s ease;
+}
+
+.global-menu .menu-link:hover {
+  background-color: var(--nav-link-hover-bg);
+  color: var(--text-color-nav-hover);
+  transform: translateY(-1px); 
+}
+.global-menu .menu-link:hover .menu-link-icon {
+  color: var(--nav-active-icon-color); 
+}
+
+.global-menu .menu-link.active {
+  background-color: var(--nav-link-active-bg);
+  color: var(--text-color-nav-active);
+  font-weight: 600;
+}
+
+.global-menu .menu-link.active .menu-link-icon {
+  color: var(--nav-active-icon-color); 
+}
+
+.menu-user-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; 
+}
+
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent; 
+  color: var(--text-color-subtle);
+  font-size: 13px; 
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.user-menu-trigger .user-avatar-icon {
+  font-size: 20px; 
+  margin-right: 8px;
+  color: var(--nav-icon-color); 
+}
+.user-menu-trigger .user-email-display {
+  max-width: 150px; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+.user-menu-trigger .user-caret-icon {
+  font-size: 12px; 
+  margin-left: auto; 
+  color: var(--nav-icon-color);
+  transition: transform 0.2s ease;
+}
+
+.user-menu-trigger:hover {
+  background-color: var(--hover-bg-light);
+  color: var(--text-color);
+  border-color: var(--border-color); 
+}
+.user-menu-trigger:hover .user-avatar-icon,
+.user-menu-trigger:hover .user-caret-icon {
+  color: var(--text-color);
+}
+
+.user-menu-trigger[aria-expanded="true"] .user-caret-icon {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px); 
+  right: 0;
+  background: var(--dropdown-bg);
+  border-radius: 8px;
+  box-shadow: var(--dropdown-shadow);
+  border: 1px solid var(--dropdown-border-color);
+  min-width: 220px; 
+  z-index: 1001;
+  overflow: hidden;
+  padding: 6px 0; 
+}
+
+.user-dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-color-nav); 
+  padding: 10px 16px; 
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  box-sizing: border-box;
+}
+.user-dropdown-menu .dropdown-item .dropdown-icon {
+  font-size: 16px; 
+  color: var(--nav-icon-color);
+  transition: color 0.2s ease;
+}
+
+.user-dropdown-menu .dropdown-item:hover {
+  background-color: var(--dropdown-item-hover-bg);
+  color: var(--primary-accent-color);
+}
+.user-dropdown-menu .dropdown-item:hover .dropdown-icon {
+  color: var(--primary-accent-color);
+}
+
+.user-dropdown-menu .logout-button {
+  color: #D32F2F; 
+}
+.user-dropdown-menu .logout-button:hover {
+  color: var(--primary-accent-text-color);
+  background-color: #C62828; 
+}
+.user-dropdown-menu .logout-button:hover .dropdown-icon {
+  color: var(--primary-accent-text-color);
+}
+
+.dropdown-divider { 
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 6px 0;
+}
+
+/* Add other global styles, utilities, etc., below */
+
 
 .menu-left-section {
   display: flex;
@@ -114,20 +358,6 @@
 .logo-hover { opacity: 0; }
 .menu-brand:hover .logo-default { opacity: 0; }
 .menu-brand:hover .logo-hover { opacity: 1; }
-
-/* Dark mode logo switch (if white logo is default in dark mode) */
-.dark .logo-default {
-  /* opacity: 0; /* Uncomment if blue logo should be hidden in dark by default */
-}
-.dark .logo-hover {
-  /* opacity: 1; /* Uncomment if white logo is default in dark mode */
-}
-.dark .menu-brand:hover .logo-default {
-  /* opacity: 1; */
-}
-.dark .menu-brand:hover .logo-hover {
-  /* opacity: 0; */
-}
 
 
 .global-menu .menu-links {

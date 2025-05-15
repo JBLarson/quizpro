@@ -1,12 +1,17 @@
 .dashboard-container {
-  width: 100%;
-  background: var(--container-bg);
-  color: var(--text-color);
-  border-radius: 8px;
-  box-shadow: var(--container-shadow);
-  margin: 0 auto;
+  /* width: 100%; /* This might be fine if .page-container controls overall width */
+  /* background: var(--container-bg); /* Likely inherited from .page-container */
+  /* color: var(--text-color); /* Inherited */
+  /* border-radius: 8px; /* Inherited or overridden by .page-container */
+  /* box-shadow: var(--container-shadow); /* Inherited or overridden */
+  /* margin: 0 auto; /* This is good for horizontal centering if not full width */
   text-align: center;
-  margin-top: 50px;
+  /* margin-top: 50px; /* This needs to be re-evaluated.
+                      The .page-container now has `top: calc(var(--navbar-height) + 40px)`.
+                      You might not need an additional margin-top here, or it should be relative
+                      to the .page-container. For now, let's make it smaller or rely on padding.
+  */
+  padding-top: 1rem; /* Add some padding if specific spacing from top of card is needed */
 }
 
 .dashboard-container h2 {

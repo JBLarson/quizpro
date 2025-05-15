@@ -1,61 +1,167 @@
+/* Setup.css - Updated for consistency with Dashboard and Global styles */
 
 .setup-card {
-  margin-top: 4vw;
-  padding: 0vw 2vw;
+  /*
+    REMOVED: margin-top: 4vw;
+    REASON: The .page-container (from Global.css) which now wraps this card
+    and the `body { padding-top: var(--navbar-height); }` rule
+    already handle positioning the content below the fixed navbar.
+    An additional margin-top here would create excessive space.
+  */
+
+  /*
+    ADJUSTED: padding: 0vw 2vw; to padding: 1.5rem; (or adjust as preferred)
+    REASON: .page-container already provides a 2rem padding.
+    If .setup-card is meant to be a distinct "card" visual within that space,
+    it should have its own internal padding. Using 'rem' is more consistent
+    with other global styles than 'vw' for component padding.
+    If you want the form elements to use the full width provided by .page-container's padding,
+    you might set this to `padding: 0;` or just vertical padding like `padding: 1rem 0;`.
+    For a card look, some padding is good. Let's go with a balanced padding.
+  */
+  padding: .5rem;
+  /* width: 100%; /* This ensures it takes the width available within .page-container's padding box */
+  /* box-sizing: border-box; /* Good practice */
+
+  /* These flex properties center the direct children (h2, form) within the setup-card.
+     This is fine if that's the desired layout. */
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center; /* Centers the form and h2 within the card */
+  /* background: var(--container-bg); /* If you want the card to have the same background as page-container or be distinct */
+  /* border-radius: 8px; /* Optional: if you want the card itself to have rounded corners distinct from page-container */
+  /* box-shadow: var(--container-shadow); /* Optional: if you want an inner card shadow */
 }
 
+/* Title inside the card */
+.setup-card h2 {
+  /* The global .page-container h2 style will apply if this h2 is not more specific.
+     You can override it here if needed. For consistency, let's assume
+     the global style is fine unless specified. */
+  /* Example: margin-bottom: 1.5rem; */
+  /* font-size: 1.5rem; /* Adjust if needed to be different from global h2 */
+  text-align: center; /* Explicitly center if not inherited as desired */
+}
 
-/* selects, inputs, textarea, range */
+/* Form specific styling within the card */
+.setup-card form {
+  width: 100%; /* Makes the form take the full width of the setup-card's content box */
+  max-width: 600px; /* Optional: constrain the width of the form for better readability */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Adds space between form elements/groups */
+}
+
+/* Labels: Make them consistent with global label styles if any, or define here */
+.setup-card label {
+  display: block; /* Ensures label takes its own line if not wrapping input */
+  font-weight: 500; /* Medium weight for better readability */
+  margin-bottom: 0.5rem; /* Space below the label, before the input/control */
+  color: var(--text-color);
+  font-size: 0.9rem; /* Slightly smaller or same as global label */
+}
+
+/* Input fields, textarea, range */
 .setup-card select,
 .setup-card input[type="file"],
-.setup-card textarea,
-.setup-card input[type="range"] {
+.setup-card input[type="text"], /* Added for completeness if any text inputs are used */
+.setup-card input[type="number"], /* Added for completeness */
+.setup-card input[type="range"],
+.setup-card textarea {
   width: 100%;
-  margin-bottom: 16px;
-  padding: 6px;
-  border-radius: 4px;
+  /* margin-bottom: 16px; /* Replaced by gap in form or can be adjusted */
+  padding: 0.6rem 0.8rem; /* Slightly more padding for a modern feel */
+  border-radius: 6px; /* Consistent with other elements */
   border: 1px solid var(--input-border);
-  background: var(--container-bg);
+  background: var(--container-bg); /* Or use a slightly different bg for inputs if desired, e.g., --bg-color */
   color: var(--text-color);
   box-sizing: border-box;
+  font-size: 1rem; /* Ensure readable font size */
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-/* button */
-.setup-card button {
-  width: 100%;
-  padding: 10px;
-  background: var(--button-bg);
+.setup-card select:focus,
+.setup-card input[type="file"]:focus,
+.setup-card input[type="text"]:focus,
+.setup-card input[type="number"]:focus,
+.setup-card input[type="range"]:focus,
+.setup-card textarea:focus {
+  outline: none;
+  border-color: var(--primary-accent-color); /* Highlight focus */
+  box-shadow: 0 0 0 2px rgba(var(--primary-accent-color-rgb, 79, 140, 255), 0.2); /* Example for --primary-accent-color: #4f8cff */
+  /* Note: You might need to define --primary-accent-color-rgb in :root if using rgba with it directly */
+}
+
+
+/* Submit Button - (assuming you use class="submit-button" as added in JSX) */
+.setup-card .submit-button { /* More specific selector */
+  width: 100%; /* Or max-width: 200px; align-self: center; for a centered, not full-width button */
+  padding: 0.75rem 1.5rem; /* Adjusted padding */
+  background: var(--primary-accent-color); /* Using the variable from Global.css */
   border: none;
-  border-radius: 4px;
-  color: var(--button-color);
-  font-size: 16px;
+  border-radius: 6px; /* Consistent rounding */
+  color: var(--primary-accent-text-color); /* Using the variable */
+  font-size: 1rem; /* Standardized font size */
+  font-weight: 500;
   cursor: pointer;
-}
-.setup-card button:hover {
-  filter: brightness(0.9);
+  transition: background-color 0.2s ease-in-out, filter 0.2s ease-in-out;
 }
 
-/* pill‑groups */
+.setup-card .submit-button:hover {
+  background-color: var(--primary-accent-color); /* Keep base color */
+  filter: brightness(0.9); /* Keep this effect or use a darker shade variable */
+}
+.setup-card .submit-button:active {
+  filter: brightness(0.8);
+}
+
+
+/* Pill Groups */
 .pill-group {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 16px;
+  flex-wrap: wrap; /* Allow pills to wrap on smaller screens */
+  gap: 0.75rem; /* Adjusted gap */
+  /* margin-bottom: 16px; /* Replaced by gap in form */
 }
+
 .pill-group .pill {
-  padding: 6px 12px;
-  border: 1px solid var(--text-color);
-  border-radius: 9999px;
+  padding: 0.5rem 1rem; /* Adjusted padding */
+  border: 1px solid var(--border-color); /* Use a standard border color */
+  border-radius: 9999px; /* Full pill shape */
   background: transparent;
   color: var(--text-color);
   cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s, color 0.2s;
+  font-size: 0.9rem; /* Adjusted font size */
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  text-align: center;
 }
+
+.pill-group .pill:hover {
+  border-color: var(--primary-accent-color);
+  color: var(--primary-accent-color);
+  background-color: rgba(var(--primary-accent-color-rgb, 79, 140, 255), 0.05); /* Very subtle background on hover */
+}
+
 .pill-group .pill.selected {
-  background: var(--button-bg);
-  color: var(--button-color);
-  border-color: var(--button-bg);
+  background: var(--primary-accent-color);
+  color: var(--primary-accent-text-color);
+  border-color: var(--primary-accent-color);
 }
+
+.pill-group .pill.selected:hover {
+  background: var(--primary-accent-color); /* Keep selected color */
+  filter: brightness(0.9);
+}
+
+/* Add this to your :root in Global.css if you use the rgba with CSS variables for box-shadow/background-color */
+/*
+:root {
+  ...
+  --primary-accent-color-rgb: 79, 140, 255; // For #4f8cff
+}
+
+.dark {
+  ...
+  --primary-accent-color-rgb: 79, 140, 255; // Or adjust if dark mode accent is different
+}
+*/

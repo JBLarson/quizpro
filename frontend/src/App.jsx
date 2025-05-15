@@ -8,13 +8,11 @@ import Login  from './pages/Login';
 
 export default function App() {
   return (
-    <div className="page-container">
-      <Routes>
-        <Route path="/"        element={<Dashboard />} />
-        <Route path="/login"        element={<Login />} />
-        <Route path="/setup" element={<Setup />} />
-        <Route path="/quiz"    element={<QuizPage />} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/"        element={<Dashboard />} />
+      <Route path="/login"        element={<Login />} />
+      <Route path="/setup" element={<Setup />} />
+      <Route path="/quiz"    element={<QuizPage />} />
+    </Routes>
   );
 }

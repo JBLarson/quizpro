@@ -1,56 +1,73 @@
 :root {
   --bg-color: #f7f7fa;
   --text-color: #333333;
+  --primary-accent-color: #4f8cff; /* Existing button color, good for accents */
+  --primary-accent-text-color: #ffffff;
   --container-bg: #ffffff;
-  --container-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  --button-bg: #4f8cff;
-  --button-color: #ffffff;
-  --button-disabled-bg: #cccccc;
-  --input-border: #cccccc;
-  --card-bg: #fafbfc;
+  --container-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer, more modern shadow */
+  --border-color: #e0e0e0; /* For subtle borders/dividers */
+  --hover-bg-light: #f0f0f0; /* Light hover for menu items */
+  --active-link-color: var(--primary-accent-color);
+  --navbar-height: 60px; /* Define navbar height for consistent spacing */
+
+  /* User Dropdown Specific */
+  --dropdown-bg: var(--container-bg);
+  --dropdown-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  --dropdown-border-color: var(--border-color);
+  --dropdown-item-hover-bg: var(--hover-bg-light);
 }
 
 .dark {
   --bg-color: #121212;
   --text-color: #e4e4e4;
+  --primary-accent-color: #4f8cff;
+  --primary-accent-text-color: #ffffff;
   --container-bg: #1e1e1e;
-  --container-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  --button-bg: #4f8cff;
-  --button-color: #ffffff;
-  --button-disabled-bg: #555555;
-  --input-border: #444444;
-  --card-bg: #212121;
+  --container-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  --border-color: #333333;
+  --hover-bg-light: #2a2a2a;
+  --active-link-color: var(--primary-accent-color);
+
+  /* User Dropdown Specific for Dark Mode */
+  --dropdown-bg: var(--container-bg);
+  --dropdown-shadow: 0 8px 16px rgba(0,0,0,0.5);
+  --dropdown-border-color: var(--border-color);
+  --dropdown-item-hover-bg: var(--hover-bg-light);
 }
 
-/* Reset & base */
 html, body {
   height: 100%;
-  margin: 0;
+  margin: 0; /* <<< THIS IS CRUCIAL for removing default body margin */
+  padding: 0; /* Also good to reset padding, though margin is the usual culprit here */
   background: var(--bg-color);
   color: var(--text-color);
-  font-family: Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  line-height: 1.6;
+  /* The body padding-top is for content *below* the navbar, it should not affect the navbar's position */
 }
+
 
 /* Centered card container */
 .page-container {
-  width: 60%;
-  height: 90%;
-  padding: 0px;
-  background: var(--bg-color);
+  width: 100%;
+  max-width: 80%; /* Add a max-width for very large screens */
+  padding: 2rem;   /* More padding */
+  background: var(--container-bg);
   color: var(--text-color);
-  border-radius: 8px;
+  border-radius: 12px; /* Slightly more rounded */
   box-shadow: var(--container-shadow);
-  /*top: 60px;  push page content below fixed menu */
   position: absolute;
-  top: 50%;
+  top: calc(var(--navbar-height) + 20px); /* Push content below fixed menu + some margin */
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
+  /* Removed height: 90% and centered vertically for content flow */
 }
 
 /* heading */
 .page-container h2 {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 1.5rem; /* More spacing */
+  font-size: 1.75rem; /* Slightly larger heading */
 }
 
 /* labels */
@@ -58,11 +75,12 @@ html, body {
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
+  font-weight: 500; /* Medium weight for labels */
 }
 
 /*
 -------------------
-Global menu styling
+Global menu styling - REWORKED
 -------------------
 */
 
@@ -71,47 +89,38 @@ Global menu styling
   align-items: center;
   justify-content: space-between;
   background: var(--container-bg);
-  box-shadow: var(--container-shadow);
-  padding: 1vw 0 1vw 0;
-  position: fixed;
-  top: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding: 0 2rem;
+  height: var(--navbar-height);
+  position: fixed; /* <<< CRUCIAL */
+  top: 0;          /* <<< CRUCIAL: This places it at the very top */
   left: 0;
   width: 100%;
-  z-index: 100;
+  z-index: 1000;
+  box-sizing: border-box;
+
 }
 
 .global-menu .menu-brand {
-  font-size: 1.25rem;
-  font-weight: bold;
+  font-size: 1.5rem; /* Larger brand */
+  font-weight: 700; /* Bolder */
   color: var(--text-color);
+  text-decoration: none;
 }
 
 .global-menu .menu-list {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem; /* Adjust gap as needed */
+  align-items: center;
+  margin: 0 auto; /* This helps center the list if space-between doesn't give enough room */
 }
 
-.global-menu .menu-list a,
-.global-menu .menu-list button {
+.global-menu .menu-link { /* Replaces .menu-list a */
   background: transparent;
   border: none;
   color: var(--text-color);
   font-size: 1rem;
+  font-weight: 500; /* Medium weight for nav links */
   cursor: pointer;
   text-decoration: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
 }
-
-.global-menu .menu-list a:hover,
-.global-menu .menu-list button:hover {
-  background: var(--button-bg);
-  color: var(--button-color);
-}
-
-.global-menu .menu-user {
-  margin-left: 1rem;
-  font-size: 0.9rem;
-  color: var(--text-color);
-}
-

@@ -1,126 +1,294 @@
-:root {
-  --bg-color: #f7f7fa;
-  --text-color: #333333;
-  --primary-accent-color: #4f8cff; /* Existing button color, good for accents */
-  --primary-accent-text-color: #ffffff;
-  --container-bg: #ffffff;
-  --container-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Softer, more modern shadow */
-  --border-color: #e0e0e0; /* For subtle borders/dividers */
-  --hover-bg-light: #f0f0f0; /* Light hover for menu items */
-  --active-link-color: var(--primary-accent-color);
-  --navbar-height: 60px; /* Define navbar height for consistent spacing */
+/* In Global.css */
 
-  /* User Dropdown Specific */
+/* :root variables (ensure these are present and adjust as needed) */
+:root {
+  --navbar-height: 60px; /* Or 64px is also a common modern height */
+  --primary-accent-color: #4A90E2; /* A slightly more refined blue, adjust to your brand */
+  --primary-accent-text-color: #ffffff;
+  
+  --text-color: #333333;
+  --text-color-subtle: #555555;
+  --text-color-nav: #484848; /* Slightly softer than pure black for nav text */
+  --text-color-nav-hover: var(--primary-accent-color);
+  --text-color-nav-active: var(--primary-accent-color);
+
+  --container-bg: #ffffff;
+  --border-color: #EAEAEA; /* Softer border color */
+  
+  --nav-link-hover-bg: rgba(74, 144, 226, 0.08); /* Subtle hover, matches accent */
+  --nav-link-active-bg: rgba(74, 144, 226, 0.12); /* Slightly more prominent active state */
+  
+  --nav-icon-color: #757575; /* Neutral icon color */
+  --nav-active-icon-color: var(--primary-accent-color);
+
   --dropdown-bg: var(--container-bg);
-  --dropdown-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  --dropdown-shadow: 0 8px 24px rgba(0,0,0,0.12); /* Softer, more diffused shadow */
   --dropdown-border-color: var(--border-color);
-  --dropdown-item-hover-bg: var(--hover-bg-light);
+  --dropdown-item-hover-bg: var(--nav-link-hover-bg);
+  --hover-bg-light: #f5f5f5; /* General light hover */
+
+  /* Define --primary-accent-color-rgb for rgba usage if not already defined */
+  --primary-accent-color-rgb: 74, 144, 226; /* For #4A90E2 */
 }
 
 .dark {
-  --bg-color: #121212;
-  --text-color: #e4e4e4;
-  --primary-accent-color: #4f8cff;
-  --primary-accent-text-color: #ffffff;
-  --container-bg: #1e1e1e;
-  --container-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  --border-color: #333333;
-  --hover-bg-light: #2a2a2a;
-  --active-link-color: var(--primary-accent-color);
+  --text-color: #E0E0E0;
+  --text-color-subtle: #BDBDBD;
+  --text-color-nav: #D0D0D0;
+  --text-color-nav-hover: var(--primary-accent-color); /* Accent color can often stay the same */
+  --text-color-nav-active: var(--primary-accent-color);
 
-  /* User Dropdown Specific for Dark Mode */
-  --dropdown-bg: var(--container-bg);
-  --dropdown-shadow: 0 8px 16px rgba(0,0,0,0.5);
+  --container-bg: #2C2C2C; /* Darker container */
+  --border-color: #424242;
+  
+  --nav-link-hover-bg: rgba(74, 144, 226, 0.15);
+  --nav-link-active-bg: rgba(74, 144, 226, 0.2);
+  
+  --nav-icon-color: #BDBDBD;
+  --nav-active-icon-color: var(--primary-accent-color);
+
+  --dropdown-bg: #333333;
+  --dropdown-shadow: 0 8px 24px rgba(0,0,0,0.3);
   --dropdown-border-color: var(--border-color);
-  --dropdown-item-hover-bg: var(--hover-bg-light);
+  --dropdown-item-hover-bg: var(--nav-link-hover-bg);
+  --hover-bg-light: #3A3A3A;
 }
 
-html, body {
-  height: 100%;
-  margin: 0; /* <<< THIS IS CRUCIAL for removing default body margin */
-  padding: 0; /* Also good to reset padding, though margin is the usual culprit here */
-  background: var(--bg-color);
-  color: var(--text-color);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  line-height: 1.6;
-  /* The body padding-top is for content *below* the navbar, it should not affect the navbar's position */
-}
-
-
-/* Centered card container */
-.page-container {
-  width: 100%;
-  max-width: 80%; /* Add a max-width for very large screens */
-  padding: 2rem;   /* More padding */
-  background: var(--container-bg);
-  color: var(--text-color);
-  border-radius: 12px; /* Slightly more rounded */
-  box-shadow: var(--container-shadow);
-  position: absolute;
-  top: calc(var(--navbar-height) + 20px); /* Push content below fixed menu + some margin */
-  left: 50%;
-  transform: translateX(-50%);
-  /* Removed height: 90% and centered vertically for content flow */
-}
-
-/* heading */
-.page-container h2 {
-  text-align: center;
-  margin-bottom: 1.5rem; /* More spacing */
-  font-size: 1.75rem; /* Slightly larger heading */
-}
-
-/* labels */
-.page-container label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500; /* Medium weight for labels */
-}
-
-/*
--------------------
-Global menu styling - REWORKED
--------------------
-*/
-
+/* Global menu styling - ENHANCED */
 .global-menu {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--container-bg);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  padding: 0 2rem;
+  /* Using a bottom border for a cleaner separation */
+  border-bottom: 1px solid var(--border-color); 
+  /* box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Optional: softer shadow if border isn't enough */
+  padding: 0 24px; /* Increased horizontal padding for more breathing room */
   height: var(--navbar-height);
-  position: fixed; /* <<< CRUCIAL */
-  top: 0;          /* <<< CRUCIAL: This places it at the very top */
+  position: fixed;
+  top: 0;
   left: 0;
   width: 100%;
   z-index: 1000;
   box-sizing: border-box;
+}
 
+.menu-left-section {
+  display: flex;
+  align-items: center;
+  /* gap: 24px; /* Increased gap between brand and the links block for better separation */
+  flex-grow: 1; /* Allow this section to take available space if needed */
+  min-width: 0; /* Important for flex item children to not overflow */
 }
 
 .global-menu .menu-brand {
-  font-size: 1.5rem; /* Larger brand */
-  font-weight: 700; /* Bolder */
-  color: var(--text-color);
-  text-decoration: none;
-}
-
-.global-menu .menu-list {
-  display: flex;
-  gap: 0.5rem; /* Adjust gap as needed */
+  display: flex; /* Use flex to align items if you add text next to logo */
   align-items: center;
-  margin: 0 auto; /* This helps center the list if space-between doesn't give enough room */
+  text-decoration: none;
+  margin-right: 24px; /* Explicit margin to separate from links */
+  flex-shrink: 0; /* Prevent logo from shrinking */
 }
 
-.global-menu .menu-link { /* Replaces .menu-list a */
+.logo-container {
+  position: relative;
+  /* Adjust width and height to fit your logo perfectly.
+     The height should ideally be var(--navbar-height) minus some vertical padding. */
+  width: 110px;  /* Example: Adjust to your logo's aspect ratio */
+  height: calc(var(--navbar-height) - 20px); /* e.g., 60px - 20px = 40px logo height */
+  display: flex; /* Helps center the image if it's smaller than container */
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.logo-default { opacity: 1; }
+.logo-hover { opacity: 0; }
+.menu-brand:hover .logo-default { opacity: 0; }
+.menu-brand:hover .logo-hover { opacity: 1; }
+
+/* Dark mode logo switch (if white logo is default in dark mode) */
+.dark .logo-default {
+  /* opacity: 0; /* Uncomment if blue logo should be hidden in dark by default */
+}
+.dark .logo-hover {
+  /* opacity: 1; /* Uncomment if white logo is default in dark mode */
+}
+.dark .menu-brand:hover .logo-default {
+  /* opacity: 1; */
+}
+.dark .menu-brand:hover .logo-hover {
+  /* opacity: 0; */
+}
+
+
+.global-menu .menu-links {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Spacing between individual links */
+  margin-left: 8px; /* Small margin from logo if gap on parent isn't enough */
+}
+
+.global-menu .menu-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;   /* Gap between icon and text */
+  padding: 10px 16px; /* Adjusted padding for a balanced look */
+  border-radius: 6px; /* Softer pill shape */
+  font-size: 14px; /* Common modern UI font size */
+  font-weight: 500; /* Medium weight for clarity */
+  color: var(--text-color-nav);
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  position: relative;
+  white-space: nowrap; /* Prevent link text from wrapping */
+}
+
+.global-menu .menu-link .menu-link-icon {
+  /* react-icons are typically SVGs, so they scale well.
+     Their color is handled by the fill/stroke properties below. */
+  font-size: 18px; /* Control icon size if needed, or let SVG size dictate */
+  color: var(--nav-icon-color); /* Default icon color */
+  transition: color 0.2s ease;
+}
+
+.global-menu .menu-link:hover {
+  background-color: var(--nav-link-hover-bg);
+  color: var(--text-color-nav-hover);
+  transform: translateY(-1px); /* Subtle lift effect */
+}
+.global-menu .menu-link:hover .menu-link-icon {
+  color: var(--nav-active-icon-color); /* Icon color matches active state on hover */
+}
+
+.global-menu .menu-link.active {
+  background-color: var(--nav-link-active-bg);
+  color: var(--text-color-nav-active);
+  font-weight: 600;
+}
+
+.global-menu .menu-link.active .menu-link-icon {
+  color: var(--nav-active-icon-color); /* Active icon color */
+}
+
+/* User Section - keeping it clean and functional */
+.menu-user-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevent user section from shrinking */
+}
+
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent; /* Add border for consistent sizing on hover/focus */
+  color: var(--text-color-subtle);
+  font-size: 13px; /* Slightly smaller for user email */
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.user-menu-trigger .user-avatar-icon {
+  font-size: 20px; /* Size for user avatar icon */
+  margin-right: 8px;
+  color: var(--nav-icon-color); /* Consistent icon color */
+}
+.user-menu-trigger .user-email-display {
+  max-width: 150px; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+.user-menu-trigger .user-caret-icon {
+  font-size: 12px; /* Size for caret */
+  margin-left: auto; /* Pushes caret to the right if email is short */
+  color: var(--nav-icon-color);
+  transition: transform 0.2s ease;
+}
+
+.user-menu-trigger:hover {
+  background-color: var(--hover-bg-light);
+  color: var(--text-color);
+  border-color: var(--border-color); /* Subtle border on hover */
+}
+.user-menu-trigger:hover .user-avatar-icon,
+.user-menu-trigger:hover .user-caret-icon {
+  color: var(--text-color);
+}
+
+.user-menu-trigger[aria-expanded="true"] .user-caret-icon {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px); /* Slightly adjusted gap */
+  right: 0;
+  background: var(--dropdown-bg);
+  border-radius: 8px;
+  box-shadow: var(--dropdown-shadow);
+  border: 1px solid var(--dropdown-border-color);
+  min-width: 220px; /* Slightly wider dropdown */
+  z-index: 1001;
+  overflow: hidden;
+  padding: 6px 0; /* Padding inside dropdown container */
+}
+
+.user-dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
   background: transparent;
   border: none;
-  color: var(--text-color);
-  font-size: 1rem;
-  font-weight: 500; /* Medium weight for nav links */
+  color: var(--text-color-nav); /* Consistent nav text color */
+  padding: 10px 16px; /* Consistent padding */
+  font-size: 14px;
   cursor: pointer;
   text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  box-sizing: border-box;
+}
+.user-dropdown-menu .dropdown-item .dropdown-icon {
+  font-size: 16px; /* Icon size in dropdown */
+  color: var(--nav-icon-color);
+  transition: color 0.2s ease;
+}
+
+.user-dropdown-menu .dropdown-item:hover {
+  background-color: var(--dropdown-item-hover-bg);
+  color: var(--primary-accent-color);
+}
+.user-dropdown-menu .dropdown-item:hover .dropdown-icon {
+  color: var(--primary-accent-color);
+}
+
+.user-dropdown-menu .logout-button {
+  color: #D32F2F; /* Slightly less harsh red */
+}
+.user-dropdown-menu .logout-button:hover {
+  color: var(--primary-accent-text-color);
+  background-color: #C62828; /* Darker red on hover */
+}
+.user-dropdown-menu .logout-button:hover .dropdown-icon {
+  color: var(--primary-accent-text-color);
+}
+
+.dropdown-divider { /* If you decide to add dividers */
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 6px 0;
 }

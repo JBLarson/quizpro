@@ -1,57 +1,289 @@
-.login-container {
-    display: flex;
-    height: 100vh;
-    align-items: center;
-    justify-content: center;
+/* frontend/src/styles/Login.css */
+
+/* Login Page Wrapper - Full screen, centers the card */
+.login-page-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh; /* Full viewport height */
+  background-color: var(--bg-color); /* Uses light grey from Global.css */
+  padding: 20px; /* Some padding for smaller screens */
+  box-sizing: border-box;
+  width: 80vw;
+  margin-left: 10vw;
+  margin-top: -10vw;
+}
+
+/* Login Card - The main container for form and logo */
+.login-card {
+  background-color: var(--container-bg); /* White card */
+  padding: 32px 40px 40px; /* Generous padding */
+  border-radius: 12px; /* Consistent with .page-container */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); /* Softer, more prominent shadow */
+  width: 100%;
+  max-width: 420px; /* Max width of the login card */
+  text-align: center; /* Center text elements like title/subtitle */
+  overflow: hidden; /* Ensures no overflow from animations if any */
+  position: relative; /* For potential absolute positioned elements inside */
+}
+
+/* Logo Animation Container */
+.login-logo-animation-container {
+  position: relative; /* For absolute positioning of logos inside */
+  width: 120px;  /* Adjust to your logo's desired display size */
+  height: 50px; /* Adjust to your logo's desired display size */
+  margin: 0 auto 28px auto; /* Center logo and space below it */
+}
+
+.animated-logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensures logo scales nicely */
+  /* Opacity will be controlled by the specific animations and initial states */
+  animation-duration: 12s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out; /* Smooth transition */
+}
+
+/* Initial state and animation for the first logo (e.g., Blue Logo) */
+.animated-logo.logo-1 {
+  opacity: 1; /* Start visible */
+  animation-name: logo1FadeCycle;
+}
+
+/* Initial state and animation for the second logo (e.g., White Logo) */
+.animated-logo.logo-2 {
+  opacity: 0; /* Start hidden */
+  animation-name: logo2FadeCycle;
+}
+
+/* Animation for Logo 1:
+  - Visible for the first part of the cycle.
+  - Fades out as Logo 2 fades in.
+  - Stays hidden while Logo 2 is visible.
+  - Fades back in as Logo 2 fades out.
+*/
+@keyframes logo1FadeCycle {
+  0% { opacity: 1; }    /* Start of cycle: Logo 1 visible */
+  45% { opacity: 1; }   /* Logo 1 stays visible */
+  50% { opacity: 0; }   /* Logo 1 fades out (mid-point of 12s = 6s) */
+  95% { opacity: 0; }   /* Logo 1 stays hidden */
+  100% { opacity: 1; }  /* Logo 1 fades back in, completing the cycle */
+}
+
+/* Animation for Logo 2:
+  - Hidden for the first part of the cycle.
+  - Fades in as Logo 1 fades out.
+  - Stays visible while Logo 1 is hidden.
+  - Fades out as Logo 1 fades back in.
+*/
+@keyframes logo2FadeCycle {
+  0% { opacity: 0; }    /* Start of cycle: Logo 2 hidden */
+  45% { opacity: 0; }   /* Logo 2 stays hidden */
+  50% { opacity: 1; }   /* Logo 2 fades in (mid-point of 12s = 6s) */
+  95% { opacity: 1; }   /* Logo 2 stays visible */
+  100% { opacity: 0; }  /* Logo 2 fades back out, completing the cycle */
+}
+
+.login-title {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  font-size: 15px;
+  color: var(--text-color-subtle);
+  margin-bottom: 32px;
+  line-height: 1.5;
 }
 
 .login-form {
-    width: 320px;
-    padding: 24px;
-    background: #f9f9f9;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Space between input groups and button */
 }
 
-.login-form h2 {
-    margin-bottom: 16px;
-    text-align: center;
+/* Input Group Styling (Icon + Input + Floating Label) */
+.input-group {
+  position: relative; /* For positioning the icon and floating label */
 }
 
-.login-form label {
-    display: block;
-    margin-bottom: 12px;
-    font-size: 14px;
-    color: #333;
+.input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color-subtle);
+  font-size: 16px;
+  transition: color 0.2s ease;
 }
 
-.login-form input {
-    display: flex;
-    width: 93%; /* same width as login button */
-    padding: 8px 10px;
-    margin-top: 4px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+.input-group input[type="email"],
+.input-group input[type="password"] {
+  width: 100%;
+  padding: 14px 14px 14px 45px; /* Top/Right/Bottom/Left padding (left for icon) */
+  border: 1px solid var(--input-border-color);
+  border-radius: 8px; /* Consistent rounded corners */
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  font-size: 15px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
-.login-error {
-    margin-bottom: 12px;
-    color: #b00020;
-    font-size: 14px;
-    text-align: center;
+.input-group input[type="email"]:focus,
+.input-group input[type="password"]:focus {
+  outline: none;
+  border-color: var(--input-focus-border-color);
+  box-shadow: var(--input-focus-shadow);
+}
+.input-group input[type="email"]:focus + .floating-label,
+.input-group input[type="password"]:focus + .floating-label,
+.input-group input[type="email"]:not(:placeholder-shown) + .floating-label, /* Keep label floated if there's content */
+.input-group input[type="password"]:not(:placeholder-shown) + .floating-label {
+  top: -10px;
+  left: 10px;
+  font-size: 11px;
+  color: var(--primary-accent-color);
+  background-color: var(--container-bg); /* Match card background for clean float */
+  padding: 0 4px;
+}
+.input-group input[type="email"]:focus ~ .input-icon, /* Change icon color on focus */
+.input-group input[type="password"]:focus ~ .input-icon {
+  color: var(--primary-accent-color);
 }
 
-.login-form button {
-    width: 100%;
-    padding: 10px;
-    background: #0069d9;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
+
+/* Floating Label (optional, but a nice touch) */
+.floating-label {
+  position: absolute;
+  left: 45px; /* Align with text start, past icon */
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color-subtle);
+  font-size: 15px;
+  pointer-events: none; /* Allows clicks to pass through to input */
+  transition: all 0.2s ease-in-out;
+  background-color: transparent; /* Default no background */
+  padding: 0;
 }
 
-.login-form button:hover {
-    background: #0053ba;
+
+/* Login Options (Remember Me / Forgot Password) - Optional */
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.remember-me {
+  display: flex;
+  align-items: center;
+  color: var(--text-color-subtle);
+  cursor: pointer;
+}
+.remember-me input[type="checkbox"] {
+  margin-right: 6px;
+  accent-color: var(--primary-accent-color); /* Styles the checkbox itself */
+}
+.forgot-password-link {
+  color: var(--primary-accent-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.forgot-password-link:hover {
+  text-decoration: underline;
+  filter: brightness(90%);
+}
+
+/* Login Button */
+.login-button.primary-button { /* Using primary-button class from global if available, or style directly */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%; /* Full width */
+  padding: 14px 20px; /* Generous padding */
+  background-color: var(--primary-accent-color);
+  color: var(--primary-accent-text-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 4px rgba(var(--primary-accent-color-rgb), 0.2);
+}
+
+.login-button.primary-button:hover:not(:disabled) {
+  background-color: var(--primary-accent-color);
+  filter: brightness(110%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(var(--primary-accent-color-rgb), 0.25);
+}
+.login-button.primary-button:active:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(100%);
+  box-shadow: 0 2px 5px rgba(var(--primary-accent-color-rgb), 0.2);
+}
+
+.login-button.primary-button:disabled {
+  background-color: #B0BEC5; /* Muted color for disabled state */
+  color: #78909C;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+.login-button.primary-button:disabled:hover { filter: none; }
+
+/* Button Spinner */
+.button-spinner {
+  display: inline-block;
+  width: 1.2em; /* Relative to button font size */
+  height: 1.2em;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary-accent-text-color);
+  animation: buttonSpin 0.8s ease-in-out infinite;
+}
+@keyframes buttonSpin { to { transform: rotate(360deg); } }
+
+/* Error Message */
+.login-error-message {
+  background-color: rgba(var(--error-color-rgb), 0.08);
+  color: var(--error-color);
+  border: 1px solid rgba(var(--error-color-rgb), 0.2);
+  border-left: 4px solid var(--error-color);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 0px; /* Error message will be part of the form flow with gap */
+  font-size: 14px;
+  text-align: left; /* Align text to the left within the error box */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+/* Sign Up Link Container (Optional) */
+.signup-link-container {
+  margin-top: 28px;
+  font-size: 14px;
+  color: var(--text-color-subtle);
+}
+.signup-link {
+  color: var(--primary-accent-color);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.signup-link:hover {
+  text-decoration: underline;
+  filter: brightness(90%);
 }

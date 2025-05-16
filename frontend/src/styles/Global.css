@@ -6,7 +6,7 @@
   --primary-accent-text-color: #FFFFFF;
   --primary-accent-color-rgb: 0, 122, 255; /* RGB for the blue above */
 
-  --bg-color: #F4F5F7; /* Light grey for the overall page background */
+  --bg-color: #FFFFFF; /* Light grey for the overall page background */
   --container-bg: #FFFFFF; /* White for cards and main content areas */
   --text-color: #171A1F; /* Dark grey for primary text, not pure black */
   --text-color-subtle: #5A6472; /* Lighter grey for secondary text, hints */

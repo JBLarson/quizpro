@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh; /* Full viewport height */
-  background-color: var(--bg-color); /* Uses light grey from Global.css */
+  background-color: #ffffff; /* Uses light grey from Global.css */
   padding: 20px; /* Some padding for smaller screens */
   box-sizing: border-box;
   width: 80vw;
@@ -16,7 +16,7 @@
 
 /* Login Card - The main container for form and logo */
 .login-card {
-  background-color: var(--container-bg); /* White card */
+  background-color: #ffffff; /* White card */
   padding: 32px 40px 40px; /* Generous padding */
   border-radius: 12px; /* Consistent with .page-container */
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); /* Softer, more prominent shadow */
@@ -111,6 +111,8 @@
 /* Input Group Styling (Icon + Input + Floating Label) */
 .input-group {
   position: relative; /* For positioning the icon and floating label */
+  background-color: #000c00;
+  border-radius: 50vw;
 }
 
 .input-icon {
@@ -129,7 +131,7 @@
   padding: 14px 14px 14px 45px; /* Top/Right/Bottom/Left padding (left for icon) */
   border: 1px solid var(--input-border-color);
   border-radius: 8px; /* Consistent rounded corners */
-  background-color: var(--input-bg);
+  background-color: #ffffff;
   color: var(--text-color);
   font-size: 15px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -150,7 +152,7 @@
   left: 10px;
   font-size: 11px;
   color: var(--primary-accent-color);
-  background-color: var(--container-bg); /* Match card background for clean float */
+  background-color: #ffffff; /* Match card background for clean float */
   padding: 0 4px;
 }
 .input-group input[type="email"]:focus ~ .input-icon, /* Change icon color on focus */

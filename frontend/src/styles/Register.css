@@ -1,0 +1,271 @@
+/* frontend/src/styles/Register.css */
+
+/* Register Page Wrapper - Full screen, centers the card */
+.register-page-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #ffffff; /* Page background */
+  padding: 20px; /* Padding around the card for smaller screens */
+  box-sizing: border-box;
+  width: 80vw; /* User requested width */
+  margin: 0 10vw; /* Centers the 80vw wrapper */
+  margin-top: -10vw; /* User requested top margin */
+}
+
+/* Register Card - The main container for form and logo */
+.register-page-wrapper .register-card {
+  background-color: #ffffff; /* White card background */
+  padding: 32px 40px 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Logo Animation Container */
+.register-page-wrapper .register-logo-animation-container {
+  position: relative;
+  width: 120px;
+  height: 50px;
+  margin: 0 auto 28px auto;
+}
+
+.register-page-wrapper .animated-logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation-duration: 12s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+.register-page-wrapper .animated-logo.logo-1 {
+  opacity: 1;
+  animation-name: logo1FadeCycleRegister;
+}
+
+.register-page-wrapper .animated-logo.logo-2 {
+  opacity: 0;
+  animation-name: logo2FadeCycleRegister;
+}
+
+@keyframes logo1FadeCycleRegister {
+  0% { opacity: 1; } 45% { opacity: 1; } 50% { opacity: 0; }
+  95% { opacity: 0; } 100% { opacity: 1; }
+}
+
+@keyframes logo2FadeCycleRegister {
+  0% { opacity: 0; } 45% { opacity: 0; } 50% { opacity: 1; }
+  95% { opacity: 1; } 100% { opacity: 0; }
+}
+
+.register-page-wrapper .register-title {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.register-page-wrapper .register-subtitle {
+  font-size: 15px;
+  color: var(--text-color-subtle);
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.register-page-wrapper .register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Space between form-field-rows */
+}
+
+/* General container for a row of form fields (can be single or paired) */
+.register-page-wrapper .form-field-row {
+  display: flex; /* Enables gap and alignment for children */
+  width: 100%; /* Takes full width available in the form */
+}
+
+/* Specifically for rows that pair two fields side-by-side */
+.register-page-wrapper .form-field-row-pair {
+  gap: 16px; /* Space between the two input groups in a pair */
+}
+
+/* Styling for the .input-group CONTAINER.
+   This container MUST be transparent and have no shape/border of its own.
+   This rule applies to .input-group whether it's in a single row or a paired row. */
+.register-page-wrapper .form-field-row .input-group {
+  position: relative;
+  background-color: transparent !important; /* CRITICAL: Container is invisible */
+  border: none !important;                 /* CRITICAL: No border on the container */
+  padding: 0 !important;                   /* CRITICAL: No padding on the container */
+  border-radius: 0 !important;             /* CRITICAL: No border-radius on the container */
+  flex-grow: 1; /* Allows it to take available space in its parent flex row */
+}
+
+/* If it's a paired row, each input-group takes roughly half the space */
+.register-page-wrapper .form-field-row-pair .input-group {
+  width: calc(50% - 8px); /* (100% / 2) - (gap / 2) */
+}
+
+/* If it's a single field row, the input-group (and thus the input inside) takes full width */
+.register-page-wrapper .form-field-row:not(.form-field-row-pair) .input-group {
+  width: 100%;
+}
+
+
+/* Styling for the ACTUAL <input> fields.
+   These get the white background and desired border.
+   This applies to ALL input fields within an .input-group on this page. */
+.register-page-wrapper .input-group input[type="email"],
+.register-page-wrapper .input-group input[type="password"],
+.register-page-wrapper .input-group input[type="text"] {
+  width: 100%; /* Input takes full width of its .input-group container */
+  padding: 14px 14px 14px 45px; /* Left padding for icon */
+  border: 1px solid var(--input-border-color); /* Standard border for the input field */
+  border-radius: 8px; /* Rounded corners for the input field itself */
+  background-color: #ffffff !important; /* EXPLICITLY WHITE BACKGROUND FOR THE INPUT, override any nonsense */
+  color: var(--text-color);
+  font-size: 15px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  position: relative; /* For z-index context if needed with labels/icons */
+}
+
+/* Input Icon Styles */
+.register-page-wrapper .input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color-subtle);
+  font-size: 16px;
+  transition: color 0.2s ease;
+  z-index: 1;
+}
+
+/* Floating Label Styles */
+.register-page-wrapper .floating-label {
+  position: absolute;
+  left: 45px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color-subtle);
+  font-size: 15px;
+  pointer-events: none;
+  transition: all 0.2s ease-in-out;
+  background-color: transparent; /* Label is initially transparent */
+  padding: 0 4px;
+  z-index: 1;
+}
+
+/* Floating label behavior on input focus or when input has value */
+.register-page-wrapper .input-group input:focus + .floating-label,
+.register-page-wrapper .input-group input:not(:placeholder-shown) + .floating-label {
+  top: -10px;
+  left: 10px;
+  font-size: 11px;
+  color: var(--primary-accent-color);
+  background-color: #ffffff; /* Label background matches card to sit cleanly above input border */
+  z-index: 2; /* Ensure label is above the input field's border */
+}
+
+/* Input focus styles */
+.register-page-wrapper .input-group input:focus {
+  outline: none;
+  border-color: var(--input-focus-border-color);
+  box-shadow: var(--input-focus-shadow);
+}
+
+.register-page-wrapper .input-group input:focus ~ .input-icon {
+  color: var(--primary-accent-color);
+}
+
+/* Register Button Styles */
+.register-page-wrapper .register-button.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  background-color: var(--primary-accent-color);
+  color: var(--primary-accent-text-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 4px rgba(var(--primary-accent-color-rgb), 0.2);
+}
+
+.register-page-wrapper .register-button.primary-button:hover:not(:disabled) {
+  filter: brightness(110%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(var(--primary-accent-color-rgb), 0.25);
+}
+.register-page-wrapper .register-button.primary-button:active:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(100%);
+  box-shadow: 0 2px 5px rgba(var(--primary-accent-color-rgb), 0.2);
+}
+
+.register-page-wrapper .register-button.primary-button:disabled {
+  background-color: #B0BEC5;
+  color: #78909C;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+.register-page-wrapper .register-button.primary-button:disabled:hover { filter: none; }
+
+.register-page-wrapper .button-spinner {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary-accent-text-color);
+  animation: buttonSpinRegister 0.8s ease-in-out infinite;
+}
+@keyframes buttonSpinRegister { to { transform: rotate(360deg); } }
+
+/* Error Message Styles */
+.register-page-wrapper .register-error-message {
+  background-color: rgba(var(--error-color-rgb), 0.08);
+  color: var(--error-color);
+  border: 1px solid rgba(var(--error-color-rgb), 0.2);
+  border-left: 4px solid var(--error-color);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Login Link Container Styles */
+.register-page-wrapper .login-link-container {
+  margin-top: 28px;
+  font-size: 14px;
+  color: var(--text-color-subtle);
+}
+.register-page-wrapper .login-link {
+  color: var(--primary-accent-color);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.register-page-wrapper .login-link:hover {
+  text-decoration: underline;
+  filter: brightness(90%);
+}

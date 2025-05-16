@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import "../styles/Dashboard.css"; // Your page-specific styles
 
 export default function Dashboard() {
-  const [userEmail, setUserEmail] = useState(''); // Simplified user state for example
+  const [userName, setUserName] = useState(''); // Simplified user state for example
 
   useEffect(() => {
     // Fetch user email if needed specifically for dashboard content,
@@ -14,7 +14,7 @@ export default function Dashboard() {
       .then(res => res.json())
       .then(data => {
         if (data.logged_in) {
-          setUserEmail(data.email);
+          setUserName(data.userName);
         }
         // No navigate to /login here, GlobalMenu handles that protection.
       })
@@ -23,7 +23,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container dashboard-container"> {/* .page-container for content card */}
-      <h2>Welcome, {userEmail || 'Guest'}!</h2>
+      <h2>Welcome, {userName || 'Guest'}!</h2>
       <p>Use the menu above to start a quiz or update your settings.</p>
       {/* Other dashboard-specific content */}
     </div>

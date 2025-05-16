@@ -121,10 +121,70 @@ def return_401_for_api():
     return redirect(login_manager.login_view)
 
 
+# ... (other Flask setup code from the immersive) ...
 
-@app.route('/api/ping', methods=['GET'])
-def ping():
-    return jsonify(message="pong")
+@app.route('/api/register', methods=['POST'])
+def register_user():
+    """
+    Handles user registration.
+    Expects JSON data with: firstName, lastName, email, password.
+    """
+    data = request.get_json()
+
+    # Validate input data
+    if not data:
+        return jsonify({"message": "No input data provided. Please send JSON."}), 400
+
+    # Get data from the request, matching keys sent by Register.jsx
+    first_name = data.get('firstName')
+    last_name = data.get('lastName')
+    email = data.get('email')
+    password = data.get('password')
+
+    # Check for missing fields
+    # ... (validation logic as in the immersive) ...
+
+    # Basic email format validation
+    # ... (validation logic as in the immersive) ...
+    
+    # Password length validation
+    # ... (validation logic as in the immersive) ...
+
+    # Check if user already exists
+    if User.find_by_email(email): # Assumes User class and find_by_email are defined as in the immersive
+        return jsonify({"message": "An account with this email address already exists."}), 409
+
+    # Hash the password
+    hashed_password = generate_password_hash(password)
+
+    # Create a new user instance
+    new_user = User(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password_hash=hashed_password
+    )
+
+    # Save the new user to the database (mocked in the example)
+    try:
+        db.session.add(new_user)  # Assumes db object is defined as in the immersive
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error during database operation: {e}")
+        return jsonify({"message": "Registration failed due to a server error. Please try again later."}), 500
+
+    # Return a success response
+    return jsonify({
+        "message": "User registered successfully!",
+        "user": {
+            "id": new_user.id,
+            "firstName": new_user.first_name,
+            "lastName": new_user.last_name,
+            "email": new_user.email
+        }
+    }), 201
+
 
 
 @app.route('/api/login', methods=['POST'])
